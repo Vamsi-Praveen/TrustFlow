@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -8,16 +10,44 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useAuth } from '@/context/AuthContext'
 
 const Login = () => {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const res = await login(email, password)
+      if (res.data.success) {
+        navigate('/admin/dashboard')
+      } else {
+        setError(res.message || 'Invalid credentials')
+      }
+    } catch (err) {
+      setError('An error occurred while logging in.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="h-screen w-screen flex items-center justify-center p-4">
       <div className="w-full max-w-4xl flex rounded-lg overflow-hidden bg-background">
         <div className="hidden md:block md:w-1/2">
           <img
-            src='/assets/images/login_banner.png'
-            alt='Login Banner'
-            className='h-full w-full object-cover'
+            src="/assets/images/login_banner.png"
+            alt="Login Banner"
+            className="h-full w-full object-cover"
           />
         </div>
         <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
@@ -29,14 +59,16 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form>
-                <div className="grid gap-6">
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-5">
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@example.com"
                       required
                       autoComplete="off"
                       spellCheck="off"
@@ -44,29 +76,36 @@ const Login = () => {
                   </div>
 
                   <div className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <a
-                        href="#"
-                        className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                      >
-                        Forgot your password?
-                      </a>
-                    </div>
-                    <Input id="password" type="password" required />
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
                   </div>
 
-                  <Button type="submit" className="w-full cursor-pointer">
-                    Login
+                  {error && (
+                    <p className="text-red-500 text-sm text-center mt-1">{error}</p>
+                  )}
+
+                  <a
+                    href="#"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </a>
+
+                  <Button
+                    type="submit"
+                    className="w-full cursor-pointer"
+                    disabled={loading}
+                  >
+                    {loading ? 'Logging in...' : 'Login'}
                   </Button>
                 </div>
               </form>
-              <div className="mt-6 text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <a href="#" className="underline font-semibold">
-                  Sign Up
-                </a>
-              </div>
             </CardContent>
           </Card>
         </div>

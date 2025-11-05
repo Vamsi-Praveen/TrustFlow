@@ -49,9 +49,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-
-
-
+import api from '@/api/axios'
 
 const defaultPermissions = {
   canCreateProject: false,
@@ -64,53 +62,6 @@ const defaultPermissions = {
   canAdminSettings: false,
 }
 
-const mockRoles= [
-  {
-    id: 'role_1',
-    name: 'Administrator',
-    description: 'Has all permissions and can manage settings.',
-    userCount: 2,
-    permissions: {
-      canCreateProject: true, canEditProject: true, canDeleteProject: true,
-      canCreateBug: true, canEditBug: true, canChangeBugStatus: true,
-      canCommentOnBug: true, canAdminSettings: true,
-    },
-  },
-  {
-    id: 'role_2',
-    name: 'Developer',
-    description: 'Can manage projects and bugs.',
-    userCount: 15,
-    permissions: {
-      canCreateProject: true, canEditProject: true, canDeleteProject: false,
-      canCreateBug: true, canEditBug: true, canChangeBugStatus: true,
-      canCommentOnBug: true, canAdminSettings: false,
-    },
-  },
-  {
-    id: 'role_3',
-    name: 'Tester / QA',
-    description: 'Can create and comment on bugs.',
-    userCount: 8,
-    permissions: {
-      canCreateProject: false, canEditProject: false, canDeleteProject: false,
-      canCreateBug: true, canEditBug: false, canChangeBugStatus: true,
-      canCommentOnBug: true, canAdminSettings: false,
-    },
-  },
-  {
-    id: 'role_4',
-    name: 'Reporter',
-    description: 'Limited to reporting new bugs.',
-    userCount: 32,
-    permissions: {
-      canCreateProject: false, canEditProject: false, canDeleteProject: false,
-      canCreateBug: true, canEditBug: false, canChangeBugStatus: false,
-      canCommentOnBug: true, canAdminSettings: false,
-    },
-  },
-]
-
 const permissionList = [
   { id: 'canCreateProject', label: 'Create Projects' },
   { id: 'canEditProject', label: 'Edit Projects' },
@@ -121,31 +72,50 @@ const permissionList = [
   { id: 'canCommentOnBug', label: 'Comment on Bugs' },
   { id: 'canAdminSettings', label: 'Manage Admin Settings' },
 ]
-// --- END MOCK DATA ---
 
 const Roles = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRole, setEditingRole] = useState()
   const [roleToDelete, setRoleToDelete] = useState()
   
-  // State for the form inside the dialog
   const [roleName, setRoleName] = useState('')
   const [roleDescription, setRoleDescription] = useState('')
   const [currentPermissions, setCurrentPermissions] = useState(defaultPermissions)
 
+  const [roles,setRoles] = useState([])
+
   // When 'editingRole' changes, populate the form state
-  useEffect(() => {
-    if (editingRole) {
-      setRoleName(editingRole.name)
-      setRoleDescription(editingRole.description)
-      setCurrentPermissions(editingRole.permissions)
-    } else {
-      // Reset form for "Create" mode
-      setRoleName('')
-      setRoleDescription('')
-      setCurrentPermissions(defaultPermissions)
+  // useEffect(() => {
+  //   if (editingRole) {
+  //     setRoleName(editingRole.name)
+  //     setRoleDescription(editingRole.description)
+  //     setCurrentPermissions(editingRole.permissions)
+  //   } else {
+  //     // Reset form for "Create" mode
+  //     setRoleName('')
+  //     setRoleDescription('')
+  //     setCurrentPermissions(defaultPermissions)
+  //   }
+  // }, [editingRole])
+
+
+  useEffect(()=>{
+    fetchRoles();
+  },[])
+
+  const fetchRoles = async()=>{
+    try{
+      const res = await api.get('/rolepermissions');
+      if(res.data.success && res.data.data){
+        setRoles(res.data.data);
+      }
     }
-  }, [editingRole])
+    catch(ex){
+
+    }
+    finally{
+    }
+  }
 
   const handleCreateClick = () => {
     setEditingRole(null)
@@ -215,10 +185,11 @@ const Roles = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockRoles.map((role) => (
-                <TableRow key={role.id}>
-                  <TableCell className="font-medium">{role.name}</TableCell>
-                  <TableCell>{role.description}</TableCell>
+              {console.log(roles)}
+              {roles.map((role) => (
+                <TableRow key={role.role.id}>
+                  <TableCell className="font-medium">{role.role.roleName}</TableCell>
+                  <TableCell>{role.role.description}</TableCell>
                   <TableCell className="hidden sm:table-cell">
                     <Badge variant="secondary">{role.userCount}</Badge>
                   </TableCell>
@@ -239,7 +210,7 @@ const Roles = () => {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{mockRoles.length}</strong> of <strong>{mockRoles.length}</strong> roles
+            Showing <strong>1-{roles.length}</strong> of <strong>{roles.length}</strong> roles
           </div>
         </CardFooter>
       </Card>

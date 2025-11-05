@@ -1,8 +1,7 @@
-import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
-import { Users, FolderGit2, Activity, Clock } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Activity, Clock, FolderGit2, Users } from "lucide-react"
 
 const Dashboard = () => {
   const stats = [
@@ -21,7 +20,6 @@ const Dashboard = () => {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-4">
         <h1 className="text-2xl font-bold">Welcome back, Vamsi 👋</h1>
         <p className="text-sm text-gray-500">Check what’s happening in TrustFlow today.</p>
@@ -29,7 +27,6 @@ const Dashboard = () => {
 
       <Separator className="my-4" />
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((item, index) => (
           <Card key={index} className="hover:shadow-md transition-shadow">
@@ -44,7 +41,6 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Recent Activity */}
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Recent Activity</h2>
         <Card className="rounded-md border p-2">

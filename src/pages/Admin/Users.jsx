@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -30,23 +30,37 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import api from '@/api/axios'
 
 const Users = () => {
-  // ✅ Sample data
-  const data = React.useMemo(
-    () => [
-      { id: 1, name: 'Vamsi Praveen', email: 'vamsi@trustflow.io', role: 'Admin' },
-      { id: 2, name: 'John Doe', email: 'john@example.com', role: 'User' },
-      { id: 3, name: 'Jane Smith', email: 'jane@example.com', role: 'Manager' },
-      { id: 4, name: 'Alex Johnson', email: 'alex@trustflow.io', role: 'User' },
-    ],
-    []
-  )
+ 
+  const [data,setData] = useState([])
+  const [loading,setLoading] = useState(false);
+
+  useEffect(()=>{
+    fetchUser();
+  },[])
+
+  const fetchUser = async()=>{
+    try{
+      setLoading(true);
+      const res = await api.get('/users');
+      if(res.data.success && res.data.data){
+        setData(res.data.data);
+      }
+    }
+    catch(ex){
+
+    }
+    finally{
+      setLoading(false)
+    }
+  }
 
   const columnHelper = createColumnHelper()
 
   const columns = [
-    columnHelper.accessor('name', { header: 'Name', cell: info => info.getValue() }),
+    columnHelper.accessor('username', { header: 'Name', cell: info => info.getValue() }),
     columnHelper.accessor('email', { header: 'Email', cell: info => info.getValue() }),
     columnHelper.accessor('role', { header: 'Role', cell: info => info.getValue() }),
     columnHelper.display({
@@ -74,12 +88,10 @@ const Users = () => {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-  // ✅ Dialog open/close state
   const [open, setOpen] = React.useState(false)
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
@@ -135,7 +147,6 @@ const Users = () => {
 
       <Separator className="my-4" />
 
-      {/* Search bar */}
       <div className="flex items-center gap-2 mb-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
@@ -148,7 +159,6 @@ const Users = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -184,7 +194,6 @@ const Users = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 mt-4">
         <Button
           variant="outline"
