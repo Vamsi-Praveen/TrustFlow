@@ -12,7 +12,6 @@ const AuthProvider = ({ children }) => {
   const fetchCurrentUser = useCallback(async () => {
     try {
       const res = await api.get("/users/me");
-      console.log(res);
       if (res.data?.success && res.data?.data) {
         setUser(res.data.data.result);
       } else {
@@ -44,7 +43,7 @@ const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       await api.post("/users/logout");
-    } catch {} finally {
+    } catch { } finally {
       setUser(null);
     }
   }, [api]);
