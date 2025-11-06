@@ -1,9 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useAuth } from "@/context/AuthContext"
 import { Activity, Clock, FolderGit2, Users } from "lucide-react"
 
 const Dashboard = () => {
+
+  const {user} = useAuth();
+
   const stats = [
     { title: "Total Users", value: "1,240", icon: <Users className="w-5 h-5 text-blue-500" /> },
     { title: "Projects", value: "58", icon: <FolderGit2 className="w-5 h-5 text-green-500" /> },
@@ -21,7 +25,7 @@ const Dashboard = () => {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">Welcome back, Vamsi 👋</h1>
+        <h1 className="text-2xl font-bold">Welcome back, {user.firstName +" "+ user.lastName} 👋</h1>
         <p className="text-sm text-gray-500">Check what’s happening in TrustFlow today.</p>
       </div>
 

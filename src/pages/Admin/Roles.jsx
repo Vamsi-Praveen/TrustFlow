@@ -1,42 +1,7 @@
-import { MoreHorizontal, PlusCircle, Shield, User } from 'lucide-react'
+import { MoreHorizontal, PlusCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
+import api from '@/api/axios'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,9 +12,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import api from '@/api/axios'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+import { toast } from 'sonner'
 
 const defaultPermissions = {
   canCreateProject: false,
@@ -58,8 +59,8 @@ const defaultPermissions = {
   canCreateBug: false,
   canEditBug: false,
   canChangeBugStatus: false,
-  canCommentOnBug: false,
-  canAdminSettings: false,
+  canCommentOnBugs: false,
+  canManageAdminSettings: false,
 }
 
 const permissionList = [
@@ -69,51 +70,59 @@ const permissionList = [
   { id: 'canCreateBug', label: 'Create Bugs/Issues' },
   { id: 'canEditBug', label: 'Edit Bugs/Issues' },
   { id: 'canChangeBugStatus', label: 'Change Bug Status' },
-  { id: 'canCommentOnBug', label: 'Comment on Bugs' },
-  { id: 'canAdminSettings', label: 'Manage Admin Settings' },
+  { id: 'canCommentOnBugs', label: 'Comment on Bugs' },
+  { id: 'canManageAdminSettings', label: 'Manage Admin Settings' }
 ]
 
 const Roles = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingRole, setEditingRole] = useState()
   const [roleToDelete, setRoleToDelete] = useState()
-  
+
   const [roleName, setRoleName] = useState('')
   const [roleDescription, setRoleDescription] = useState('')
   const [currentPermissions, setCurrentPermissions] = useState(defaultPermissions)
 
-  const [roles,setRoles] = useState([])
-
-  // When 'editingRole' changes, populate the form state
-  // useEffect(() => {
-  //   if (editingRole) {
-  //     setRoleName(editingRole.name)
-  //     setRoleDescription(editingRole.description)
-  //     setCurrentPermissions(editingRole.permissions)
-  //   } else {
-  //     // Reset form for "Create" mode
-  //     setRoleName('')
-  //     setRoleDescription('')
-  //     setCurrentPermissions(defaultPermissions)
-  //   }
-  // }, [editingRole])
+  const [roles, setRoles] = useState([])
 
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (editingRole) {
+      setRoleName(editingRole.roleName)
+      setRoleDescription(editingRole.description)
+      const updatedPermissions = {
+        ...defaultPermissions,
+        ...Object.fromEntries(
+          Object.entries(editingRole).filter(([key]) =>
+            key.startsWith("can")
+          )
+        )
+      }
+
+      setCurrentPermissions(updatedPermissions)
+    } else {
+      setRoleName('')
+      setRoleDescription('')
+      setCurrentPermissions(defaultPermissions)
+    }
+  }, [editingRole])
+
+
+  useEffect(() => {
     fetchRoles();
-  },[])
+  }, [])
 
-  const fetchRoles = async()=>{
-    try{
+  const fetchRoles = async () => {
+    try {
       const res = await api.get('/rolepermissions');
-      if(res.data.success && res.data.data){
+      if (res.data.success && res.data.data) {
         setRoles(res.data.data);
       }
     }
-    catch(ex){
+    catch (ex) {
 
     }
-    finally{
+    finally {
     }
   }
 
@@ -123,32 +132,59 @@ const Roles = () => {
   }
 
   const handleEditClick = (role) => {
-    setEditingRole(role)
+    setEditingRole(role.role)
     setIsDialogOpen(true)
   }
 
   const handleDeleteClick = (role) => {
-    setRoleToDelete(role)
+    setRoleToDelete(role.role)
   }
 
-  const confirmDelete = () => {
-    console.log(`Deleting role: ${roleToDelete?.name}`)
-    setRoleToDelete(null)
+  const confirmDelete = async () => {
+    if (!roleToDelete) return
+
+    console.log(roleToDelete)
+
+    try {
+      await api.delete(`/rolepermissions/${roleToDelete.id}`)
+      fetchRoles()
+    } catch (error) {
+      console.error('Error deleting role:', error)
+    } finally {
+      setRoleToDelete(null)
+    }
   }
 
-  const handlePermissionChange = (permissionId,checked) => {
+  const handlePermissionChange = (permissionId, checked) => {
     setCurrentPermissions(prev => ({ ...prev, [permissionId]: checked }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    const roleData = { name: roleName, description: roleDescription, permissions: currentPermissions }
-    if (editingRole) {
-      console.log('Updating role:', { id: editingRole.id, ...roleData })
-    } else {
-      console.log('Creating new role:', roleData)
+
+    const now = new Date().toISOString()
+    const roleData = {
+      createdAt: editingRole?.createdAt || now,
+      updatedAt: now,
+      roleName,
+      description: roleDescription,
+      ...currentPermissions,
     }
-    setIsDialogOpen(false)
+
+    try {
+      if (editingRole) {
+        await api.put(`/rolepermissions/${editingRole.id}`, roleData)
+        toast.success(`Role "${roleName}" updated successfully`)
+      } else {
+        await api.post('/rolepermissions', roleData)
+        toast.success(`Role "${roleName}" created successfully`)
+      }
+
+      fetchRoles()
+      setIsDialogOpen(false)
+    } catch (error) {
+      toast.error(error?.response?.data?.message)
+    }
   }
 
   return (
@@ -185,7 +221,6 @@ const Roles = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {console.log(roles)}
               {roles.map((role) => (
                 <TableRow key={role.role.id}>
                   <TableCell className="font-medium">{role.role.roleName}</TableCell>
@@ -245,7 +280,7 @@ const Roles = () => {
                     <Checkbox
                       id={permission.id}
                       checked={currentPermissions[permission.id]}
-                      onCheckedChange={(checked) => handlePermissionChange(permission.id,checked)}
+                      onCheckedChange={(checked) => handlePermissionChange(permission.id, checked)}
                     />
                     <Label htmlFor={permission.id} className="font-normal">{permission.label}</Label>
                   </div>
@@ -254,7 +289,7 @@ const Roles = () => {
             </div>
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Role</Button>
+              <Button type="submit">{editingRole? "Edit Role" : "Save Role"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -267,7 +302,7 @@ const Roles = () => {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the role
-              <span className="font-bold"> "{roleToDelete?.name}"</span>. 
+              <span className="font-bold"> "{roleToDelete?.roleName}"</span>.
               Users assigned to this role will lose their permissions.
             </AlertDialogDescription>
           </AlertDialogHeader>

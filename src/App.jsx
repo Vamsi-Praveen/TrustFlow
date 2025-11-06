@@ -10,13 +10,16 @@ import Roles from './pages/Admin/Roles'
 import Users from './pages/Admin/Users'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
+import { Toaster } from './components/ui/sonner'
 
 const App = () => {
   return (
-    <AuthProvider>
+    <>
+      <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path='/auth/login' element={<Login />} />
+          <Route element={<ProtectedRoute />}>
             <Route path='/admin' element={<AdminLayout />}>
               <Route path='dashboard' element={<Dashboard />} />
               <Route path='users' element={<Users />} />
@@ -25,10 +28,13 @@ const App = () => {
               <Route path='members' element={<Members />} />
               <Route path='configuration' element={<Configurations />} />
             </Route>
+          </Route>
           <Route path='*' element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    <Toaster richColors position="top-right"/>
+    </>
   )
 }
 
