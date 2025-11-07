@@ -29,12 +29,12 @@ const Login = () => {
     try {
       const res = await login(email, password)
       if (res.data.success) {
-        navigate('/admin/dashboard')
+        navigate('/dashboard')
       } else {
         setError(res.message || 'Invalid credentials')
       }
     } catch (err) {
-      setError('An error occurred while logging in.')
+      setError(err?.response?.data?.message || 'An error occurred while logging in.')
     } finally {
       setLoading(false)
     }
@@ -80,6 +80,7 @@ const Login = () => {
                     <Input
                       id="password"
                       type="password"
+                      placeholder="* * * * * * * * * *"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -89,13 +90,6 @@ const Login = () => {
                   {error && (
                     <p className="text-red-500 text-sm text-center mt-1">{error}</p>
                   )}
-
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
 
                   <Button
                     type="submit"

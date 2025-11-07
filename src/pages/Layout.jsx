@@ -2,11 +2,11 @@ import Sidebar from '@/components/Sidebar'
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
-const AdminLayout = () => {
+const Layout = () => {
   return (
     <div className='flex h-screen w-screen'>
       <aside className='bg-gray-100 w-[300px] p-4'>
-        <Sidebar/>
+        <Sidebar />
       </aside>
       <main className='flex-1 p-6 overflow-auto'>
         <Outlet />
@@ -15,4 +15,4 @@ const AdminLayout = () => {
   )
 }
 
-export default AdminLayout
+export default Layout

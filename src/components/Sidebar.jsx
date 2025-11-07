@@ -24,9 +24,9 @@ const Sidebar = () => {
           <AvatarImage src={`https://avatar.iran.liara.run/username?username=${user.firstName}+${user.lastName}`} alt="Profile" />
           <AvatarFallback><Loader className='size-4 animate-spin' /></AvatarFallback>
         </Avatar>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-medium capitalize">{user.username}</span>
-          <span className="text-xs text-gray-500">{user.email}</span>
+        <div className="flex flex-col leading-tight max-w-[200px] w-[200px] overflow-hidden">
+          <span className="text-sm font-medium capitalize truncate">{user.username}</span>
+          <span className="text-xs text-gray-500 truncate">{user.email}</span>
         </div>
         <button
           onClick={logout}

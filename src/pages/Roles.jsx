@@ -55,6 +55,7 @@ import useAxios from '@/hooks/useAxios'
 const defaultPermissions = {
   canCreateProject: false,
   canEditProject: false,
+  canViewProject:false,
   canDeleteProject: false,
   canCreateBug: false,
   canEditBug: false,
@@ -65,6 +66,7 @@ const defaultPermissions = {
 
 const permissionList = [
   { id: 'canCreateProject', label: 'Create Projects' },
+  { id: 'canViewProject', label: 'View Projects' },
   { id: 'canEditProject', label: 'Edit Projects' },
   { id: 'canDeleteProject', label: 'Delete Projects' },
   { id: 'canCreateBug', label: 'Create Bugs/Issues' },

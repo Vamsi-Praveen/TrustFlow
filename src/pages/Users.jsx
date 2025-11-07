@@ -1,3 +1,4 @@
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -49,8 +50,10 @@ const Users = () => {
     username: "",
     email: "",
     roleId: "",
-    roleName: ""
+    role: ""
   });
+
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const updateUserData = (key, value) => {
     setUserData(prev => ({ ...prev, [key]: value }));
@@ -59,10 +62,10 @@ const Users = () => {
   const API = useAxios();
 
   useEffect(() => {
-    fetchUser();
+    fetchUsers();
   }, [])
 
-  const fetchUser = async () => {
+  const fetchUsers = async () => {
     try {
       setDataLoading(true);
       const res = await API.get('/users');
@@ -125,14 +128,14 @@ const Users = () => {
                 username: user.username,
                 email: user.email,
                 roleId: user.roleId,
-                roleName: user.roleName
+                role: user.role
               });
               setOpen(true);
             }}
           >
             Edit
           </Button>
-          <Button variant="destructive" size="sm">Delete</Button>
+          <Button variant="destructive" size="sm" onClick={()=>{handleDelete(row.original)}}>Delete</Button>
         </div>
       ),
     }),
@@ -152,17 +155,46 @@ const Users = () => {
   })
 
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try{
-
-    }
-    catch(ex){
-
-    }
-    finally{
+    try {
+      if (editingUser) {
+        await API.put(`/users/${editingUser.id}`, userData)
+        toast.success(`User "${userData.username}" updated successfully`)
+      } else {
+        await API.post('/users', userData)
+        toast.success(`User "${userData.username}" created successfully`)
+      }
+      setOpen(false)
+      fetchUsers();
+    } catch (error) {
+      toast.error(error?.response?.data?.message)
+    } finally {
       setIsLoading(false)
+    }
+  }
+
+  const resetPassword = async (e) => {
+    e.preventDefault();
+    toast.success("TODO: Password Reset Successfully");
+  }
+
+
+  const handleDelete = (user)=>{
+    setUserToDelete(user)
+  }
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return
+    try {
+      await API.delete(`/users/${userToDelete.id}`)
+      toast.success(`User ${userToDelete.username} deleted successfully`)
+      fetchUsers();
+    } catch (error) {
+      toast.error(`Failed to delete user ${userToDelete.username}`)
+    } finally {
+      setUserToDelete(null);
     }
   }
 
@@ -185,7 +217,7 @@ const Users = () => {
                   username: "",
                   email: "",
                   roleId: "",
-                  roleName: ""
+                  role: ""
                 });
                 setOpen(true);
               }}
@@ -197,9 +229,9 @@ const Users = () => {
           <DialogContent className="sm:max-w-md">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
+                <DialogTitle>{editingUser ? "Edit User" : "Create New User"}</DialogTitle>
                 <DialogDescription>
-                  Fill in the details to add a new user.
+                  Fill in the details to {editingUser ? "edit" : "add a new"} user.
                 </DialogDescription>
               </DialogHeader>
 
@@ -251,7 +283,7 @@ const Users = () => {
                     onValueChange={(value) => {
                       const selected = roles.find((r) => r.id === value);
                       updateUserData("roleId", value);
-                      updateUserData("roleName", selected?.roleName || "");
+                      updateUserData("role", selected?.roleName || "");
                     }}
                   >
                     <SelectTrigger className="col-span-3 w-full">
@@ -270,7 +302,8 @@ const Users = () => {
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancel</Button>
+                {editingUser && <Button type="button" variant="secondary" onClick={resetPassword}>Reset Password</Button>}
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancel</Button>
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -360,6 +393,23 @@ const Users = () => {
           Next
         </Button>
       </div>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              <span className="font-bold text-red-500"> "{userToDelete?.username}"</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-400 hover:bg-red-500 transition">Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   )
 }

@@ -7,7 +7,7 @@ import {
   Search,
   Users,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   AlertDialog,
@@ -66,62 +66,79 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/context/AuthContext'
+import { timeAgo } from '@/helpers/TimeConversion'
+import useAxios from '@/hooks/useAxios'
+import { toast } from 'sonner'
 
-// --- MOCK DATA (same as before) ---
-const mockUsers = [
-  { id: 'usr_1', name: 'Liam Johnson', initial: 'LJ' },
-  { id: 'usr_2', name: 'Olivia Smith', initial: 'OS' },
-  { id: 'usr_3', name: 'Noah Williams', initial: 'NW' },
-  { id: 'usr_4', name: 'Emma Brown', initial: 'EB' },
-]
-
-const mockProjects = [
-  {
-    id: 'proj_1',
-    name: 'E-Commerce Platform',
-    lead: mockUsers[1],
-    openIssues: 23,
-    members: 8,
-    lastUpdated: '2 hours ago',
-  },
-  {
-    id: 'proj_2',
-    name: 'Mobile App',
-    lead: mockUsers[0],
-    openIssues: 5,
-    members: 4,
-    lastUpdated: '1 day ago',
-  },
-  {
-    id: 'proj_3',
-    name: 'Reporting Service',
-    lead: mockUsers[3],
-    openIssues: 12,
-    members: 5,
-    lastUpdated: '3 days ago',
-  },
-  {
-    id: 'proj_4',
-    name: 'Billing System',
-    lead: mockUsers[2],
-    openIssues: 31,
-    members: 6,
-    lastUpdated: '1 week ago',
-  },
-  {
-    id: 'proj_5',
-    name: 'Internal Dashboard',
-    lead: mockUsers[1],
-    openIssues: 0,
-    members: 3,
-    lastUpdated: '2 weeks ago',
-  },
-]
-// --- END MOCK DATA ---
 
 const Projects = () => {
+
   const [projectToDelete, setProjectToDelete] = useState()
+
   const [searchTerm, setSearchTerm] = useState('')
+
+  const [projects, setProjects] = useState([]);
+
+  const [isDataLoading, setDataLoading] = useState(false);
+
+  const [users, setUsers] = useState([]);
+
+  const [project, setProject] = useState({
+    "name": "",
+    "description": "",
+    "leadUserId": "",
+    "leadUserName": "",
+    "managerUserId":"",
+    "members": []
+  })
+
+  const [open, setOpen] = useState(false)
+
+
+  const { hasPermission } = useAuth();
+
+  const API = useAxios();
+
+  useEffect(() => {
+    fetchProjects();
+  }, [])
+
+
+  const fetchUsers = async () => {
+    try {
+      const res = await API.get('/users');
+      if (res.data?.success && res.data?.data) {
+        setUsers(res.data.data);
+      }
+    }
+    catch (ex) {
+      console.log(ex);
+      toast.error("Failed to get users");
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      setDataLoading(true);
+      const res = await API.get('/projects');
+      if (res.data?.success && res.data?.data) {
+        setProjects(res.data.data);
+      }
+    }
+    catch (ex) {
+      console.log(ex);
+      toast.error("Failed to fetch projects");
+    }
+    finally {
+      setDataLoading(false)
+    }
+  }
+
+
+  const updateProjectData = (key, value) => {
+    setProject(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleDeleteClick = (project) => {
     setProjectToDelete(project)
@@ -132,13 +149,12 @@ const Projects = () => {
     setProjectToDelete(null)
   }
 
-  const filteredProjects = mockProjects.filter((project) =>
+  const filteredProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
-    <div className="flex-1 space-y-4 bg-muted/40">
-      {/* Page Header */}
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
@@ -147,12 +163,27 @@ const Projects = () => {
           </p>
         </div>
         <div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Project
-              </Button>
-            </DialogTrigger>
+          <Dialog open={open} onOpenChange={setOpen}>
+            {hasPermission("CanCreateProject") && (
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setProject({
+                      "name": "",
+                      "description": "",
+                      "leadUserId": "",
+                      "leadUserName": "",
+                      "managerUserId":"",
+                      "members": []
+                    });
+                    setOpen(true)
+                  }}
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" /> Create New Project
+                </Button>
+              </DialogTrigger>
+            )}
+
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Create New Project</DialogTitle>
@@ -160,31 +191,64 @@ const Projects = () => {
                   Fill in the details below to create a new project.
                 </DialogDescription>
               </DialogHeader>
+
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Project Name</Label>
-                  <Input id="name" className="col-span-3" placeholder="E.g., Mobile App Redesign"/>
+
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="name" className="w-32 text-right">
+                    Project Name
+                  </Label>
+                  <Input id="name" placeholder="E.g.,Mobile App Redesign" className="flex-1" value={project.name} onChange={(e)=>updateProjectData("name",e.target.value)} />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="description" className="text-right">Description</Label>
-                  <Textarea id="description" className="col-span-3" placeholder="A short description of the project."/>
+
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="description" className="w-32 text-right">
+                    Description
+                  </Label>
+                  <Textarea id="description" placeholder="Short project description" className="flex-1" value={project.description} onChange={(e)=>updateProjectData("description",e.target.value)} />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lead" className="text-right">Project Lead</Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a user" />
+
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="lead" className="w-32 text-right">
+                    Project Lead
+                  </Label>
+                  <Select value={project.leadUserId} onValueChange={(value)=>updateProjectData("leadUserId",value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select user" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockUsers.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.firstName + " " + user.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Label htmlFor="manager" className="w-32 text-right">
+                    Project Manager
+                  </Label>
+                  <Select value={project.managerUserId} onValueChange={(value)=>updateProjectData("managerUserId",value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.firstName + " " + user.lastName}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
               <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancel</Button>
+                </DialogClose>
                 <Button type="submit">Create Project</Button>
               </DialogFooter>
             </DialogContent>
@@ -192,7 +256,6 @@ const Projects = () => {
         </div>
       </div>
 
-      {/* Tabs for View Switching */}
       <Tabs defaultValue="list" className="space-y-4">
         <div className="flex items-center justify-between">
           <TabsList>
@@ -210,7 +273,6 @@ const Projects = () => {
           </div>
         </div>
 
-        {/* List View (Table) */}
         <TabsContent value="list">
           <Card>
             <CardContent className="px-4 py-2">
@@ -231,24 +293,28 @@ const Projects = () => {
                       <TableCell className="font-medium">{project.name}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={`/avatars/${project.lead.id}.png`} />
-                            <AvatarFallback>{project.lead.initial}</AvatarFallback>
+                          <Avatar className="w-6 h-6 object-contain border">
+                            <AvatarImage src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`} alt="Profile" />
+                            <AvatarFallback>{project.leadUserName?.split("")[0]}</AvatarFallback>
                           </Avatar>
-                          <span>{project.lead.name}</span>
+                          <span>{project.leadUserName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell"><Badge variant="outline">{project.openIssues}</Badge></TableCell>
-                      <TableCell className="hidden md:table-cell">{project.members}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{project.lastUpdated}</TableCell>
+                      <TableCell className="hidden md:table-cell"><Badge variant="outline">{project.openIssues || 1}</Badge></TableCell>
+                      <TableCell className="hidden md:table-cell">{project?.members?.length}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{timeAgo(project.updatedAt)}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onSelect={() => handleDeleteClick(project)}>Delete</DropdownMenuItem>
+                            {
+                              hasPermission("CanEditProject") && <DropdownMenuItem>Edit</DropdownMenuItem>
+                            }
+                            {
+                              hasPermission("CanDeleteProject") && <DropdownMenuItem className="text-red-600" onSelect={() => handleDeleteClick(project)}>Delete</DropdownMenuItem>
+                            }
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -264,7 +330,7 @@ const Projects = () => {
           </Card>
         </TabsContent>
 
-        {/* Grid View (Cards) */}
+
         <TabsContent value="grid">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((project) => (
@@ -274,11 +340,11 @@ const Projects = () => {
                     <div>
                       <CardTitle>{project.name}</CardTitle>
                       <CardDescription className="flex items-center gap-2 pt-1">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={`/avatars/${project.lead.id}.png`} />
-                          <AvatarFallback className="text-xs">{project.lead.initial}</AvatarFallback>
+                        <Avatar className="w-5 h-5 object-contain border">
+                          <AvatarImage src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`} alt="Profile" />
+                          <AvatarFallback>{project.leadUserName?.split("")[0]}</AvatarFallback>
                         </Avatar>
-                        <span>Led by {project.lead.name}</span>
+                        <span>Led by {project.leadUserName}</span>
                       </CardDescription>
                     </div>
                     <DropdownMenu>
@@ -286,8 +352,12 @@ const Projects = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onSelect={() => handleDeleteClick(project)}>Delete</DropdownMenuItem>
+                        {
+                          hasPermission("CanEditProject") && <DropdownMenuItem>Edit</DropdownMenuItem>
+                        }
+                        {
+                          hasPermission("CanDeleteProject") && <DropdownMenuItem className="text-red-600" onSelect={() => handleDeleteClick(project)}>Delete</DropdownMenuItem>
+                        }
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -296,24 +366,24 @@ const Projects = () => {
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Bug className="h-4 w-4" />
-                      <span>{project.openIssues} Open Issues</span>
+                      <span>{project?.openIssues || 0} Open Issues</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
-                      <span>{project.members} Members</span>
+                      <span>{project?.members?.length} Members</span>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <p className="text-xs text-muted-foreground">Last updated {project.lastUpdated}</p>
+                  <p className="text-xs text-muted-foreground">Last updated {timeAgo(project.updatedAt)}</p>
                 </CardFooter>
               </Card>
             ))}
           </div>
           {filteredProjects.length === 0 && (
-             <div className="text-center py-12 text-muted-foreground">
-                <p>No projects found matching your search.</p>
-             </div>
+            <div className="text-center py-12 text-muted-foreground">
+              <p>No projects found matching your search.</p>
+            </div>
           )}
         </TabsContent>
       </Tabs>
