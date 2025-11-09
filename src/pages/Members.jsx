@@ -122,13 +122,11 @@ const Members = () => {
   }
 
   return (
-    <div className="flex-1 space-y-4  bg-muted/40 min-h-screen">
+    <div className="bg-muted/40 min-h-screen flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Members</h1>
-          <p className="text-muted-foreground">
-            Invite and manage team members.
-          </p>
+          <p className="text-muted-foreground">Invite and manage team members.</p>
         </div>
         <div>
           <Dialog>
@@ -157,7 +155,9 @@ const Members = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {mockRoles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -165,7 +165,9 @@ const Members = () => {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
                 </DialogClose>
                 <Button type="submit">Send Invitation</Button>
               </DialogFooter>
@@ -177,9 +179,7 @@ const Members = () => {
       <Card>
         <CardHeader>
           <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            A list of all members in your organization.
-          </CardDescription>
+          <CardDescription>A list of all members in your organization.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -188,7 +188,9 @@ const Members = () => {
                 <TableHead>Member</TableHead>
                 <TableHead className="hidden sm:table-cell">Role</TableHead>
                 <TableHead className="hidden md:table-cell">Join Date</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -201,8 +203,8 @@ const Members = () => {
                         <AvatarFallback>{member.initial}</AvatarFallback>
                       </Avatar>
                       <div className="grid gap-1">
-                        <p className="text-sm font-medium leading-none">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                        <p className="text-sm leading-none font-medium">{member.name}</p>
+                        <p className="text-muted-foreground text-sm">{member.email}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -212,11 +214,21 @@ const Members = () => {
                   <TableCell className="hidden md:table-cell">{member.joinDate}</TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /><span className="sr-only">Toggle menu</span></Button></DropdownMenuTrigger>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem>Edit Role</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onSelect={() => handleRemoveClick(member)}>Remove</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onSelect={() => handleRemoveClick(member)}
+                        >
+                          Remove
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -226,18 +238,20 @@ const Members = () => {
           </Table>
         </CardContent>
         <CardFooter>
-          <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{mockMembers.length}</strong> of <strong>{mockMembers.length}</strong> members
+          <div className="text-muted-foreground text-xs">
+            Showing <strong>1-{mockMembers.length}</strong> of <strong>{mockMembers.length}</strong>{' '}
+            members
           </div>
         </CardFooter>
       </Card>
-      
+
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove <span className="font-bold">{memberToRemove?.name}</span> from the organization. They will lose all access.
+              This will permanently remove <span className="font-bold">{memberToRemove?.name}</span>{' '}
+              from the organization. They will lose all access.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

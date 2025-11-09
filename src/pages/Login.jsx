@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
@@ -41,8 +35,8 @@ const Login = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl flex rounded-lg overflow-hidden bg-background">
+    <div className="flex h-screen w-screen items-center justify-center p-4">
+      <div className="bg-background flex w-full max-w-4xl overflow-hidden rounded-lg">
         <div className="hidden md:block md:w-1/2">
           <img
             src="/assets/images/login_banner.png"
@@ -50,13 +44,11 @@ const Login = () => {
             className="h-full w-full object-cover"
           />
         </div>
-        <div className="w-full md:w-1/2 p-8 flex items-center justify-center">
+        <div className="flex w-full items-center justify-center p-8 md:w-1/2">
           <Card className="w-full max-w-md border-0 shadow-none">
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">Welcome Back!</CardTitle>
-              <CardDescription>
-                Enter your credentials to access your account.
-              </CardDescription>
+              <CardDescription>Enter your credentials to access your account.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit}>
@@ -87,15 +79,9 @@ const Login = () => {
                     />
                   </div>
 
-                  {error && (
-                    <p className="text-red-500 text-sm text-center mt-1">{error}</p>
-                  )}
+                  {error && <p className="mt-1 text-center text-sm text-red-500">{error}</p>}
 
-                  <Button
-                    type="submit"
-                    className="w-full cursor-pointer"
-                    disabled={loading}
-                  >
+                  <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
                     {loading ? 'Logging in...' : 'Login'}
                   </Button>
                 </div>

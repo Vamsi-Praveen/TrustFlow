@@ -1,68 +1,72 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import api from "@/api/axios";
-import { toast } from "sonner";
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import api from '@/api/axios'
+import { toast } from 'sonner'
 
-const AuthContext = createContext();
+const AuthContext = createContext()
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext)
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userPermissions, setUserPermissions] = useState(null);
+  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [userPermissions, setUserPermissions] = useState(null)
+  const [role, setRole] = useState(null)
 
   const hasPermission = (permission) => {
-    return userPermissions.includes(permission);
-  };
+    return userPermissions.includes(permission)
+  }
 
   const fetchCurrentUser = useCallback(async () => {
     try {
-      const res = await api.get("/users/me");
+      const res = await api.get('/users/me')
       if (res.data?.success && res.data?.data) {
-        setUser(res.data.data.result);
+        setUser(res.data.data.result)
+        setRole(res?.data?.data.result.role)
         setUserPermissions(res.data.data.result.permissions)
       } else {
-        setUser(null);
+        setUser(null)
         setUserPermissions(null)
+        setRole(null)
       }
     } catch {
-      setUser(null);
+      setUser(null)
       setUserPermissions(null)
+      setRole(null)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [api]);
+  }, [api])
 
   const login = useCallback(
     async (username, password) => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
-        const res = await api.post("/users/authenticate", { username, password });
+        const res = await api.post('/users/authenticate', { username, password })
         if (res.data?.success) {
-          await fetchCurrentUser();
+          await fetchCurrentUser()
         }
-        return res;
+        return res
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     },
-    [api, fetchCurrentUser]
-  );
+    [api, fetchCurrentUser],
+  )
 
   const logout = useCallback(async () => {
     try {
-      await api.post("/users/logout");
+      await api.post('/users/logout')
     } catch (ex) {
-      toast.error(ex?.response?.data?.message || "Unable to Logout User");
+      toast.error(ex?.response?.data?.message || 'Unable to Logout User')
     } finally {
-      setUser(null);
+      setUser(null)
       setUserPermissions(null)
     }
-  }, [api]);
+  }, [api])
 
   useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+    fetchCurrentUser()
+  }, [fetchCurrentUser])
 
   const value = {
     user,
@@ -72,10 +76,11 @@ const AuthProvider = ({ children }) => {
     logout,
     fetchCurrentUser,
     hasPermission,
-    userPermissions
-  };
+    userPermissions,
+    role,
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
 
-export default AuthProvider;
+export default AuthProvider

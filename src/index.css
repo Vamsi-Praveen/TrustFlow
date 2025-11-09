@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-*{
-  font-family: "JetBrains Mono", monospace;
+* {
+  font-family: 'JetBrains Mono', monospace;
   font-optical-sizing: auto;
   font-style: normal;
 }
 
-::-webkit-scrollbar{
+::-webkit-scrollbar {
   appearance: none;
   display: none;
 }
@@ -122,8 +122,6 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
-
-
 
 @layer base {
   * {

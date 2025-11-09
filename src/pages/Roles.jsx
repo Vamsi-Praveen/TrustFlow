@@ -55,7 +55,7 @@ import useAxios from '@/hooks/useAxios'
 const defaultPermissions = {
   canCreateProject: false,
   canEditProject: false,
-  canViewProject:false,
+  canViewProject: false,
   canDeleteProject: false,
   canCreateBug: false,
   canEditBug: false,
@@ -89,7 +89,7 @@ const Roles = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isDataLoading, setIsDataLoading] = useState(false)
 
-  const API = useAxios();
+  const API = useAxios()
 
   const resetForm = () => {
     setRoleName('')
@@ -104,9 +104,7 @@ const Roles = () => {
 
       const updatedPermissions = {
         ...defaultPermissions,
-        ...Object.fromEntries(
-          Object.entries(editingRole).filter(([key]) => key.startsWith('can'))
-        ),
+        ...Object.fromEntries(Object.entries(editingRole).filter(([key]) => key.startsWith('can'))),
       }
       setCurrentPermissions(updatedPermissions)
     } else {
@@ -160,9 +158,9 @@ const Roles = () => {
 
     const hasAtLeastOnePermission = Object.values(currentPermissions).some((v) => v === true)
     if (!hasAtLeastOnePermission) {
-      toast.error("Please select at least one permission for this role.")
-      setIsLoading(false);
-      return;
+      toast.error('Please select at least one permission for this role.')
+      setIsLoading(false)
+      return
     }
 
     const now = new Date().toISOString()
@@ -193,13 +191,20 @@ const Roles = () => {
   }
 
   return (
-    <div className="flex-1 space-y-4 bg-muted/40 min-h-screen">
+    <div className="bg-muted/40 min-h-screen flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Roles</h1>
-          <p className="text-muted-foreground">Manage application user roles and their permissions.</p>
+          <p className="text-muted-foreground">
+            Manage application user roles and their permissions.
+          </p>
         </div>
-        <Button onClick={() => { setEditingRole(null); setIsDialogOpen(true) }}>
+        <Button
+          onClick={() => {
+            setEditingRole(null)
+            setIsDialogOpen(true)
+          }}
+        >
           <PlusCircle className="mr-2 h-4 w-4" /> Create New Role
         </Button>
       </div>
@@ -216,14 +221,16 @@ const Roles = () => {
                 <TableHead>Role Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="hidden sm:table-cell">Users</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {isDataLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6">
+                  <TableCell colSpan={4} className="py-6 text-center">
                     <Loader className="mx-auto size-6 animate-spin" />
                   </TableCell>
                 </TableRow>
@@ -244,8 +251,15 @@ const Roles = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => handleEditClick(role)}>Edit Role</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onSelect={() => handleDeleteClick(role)}>Delete Role</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleEditClick(role)}>
+                            Edit Role
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onSelect={() => handleDeleteClick(role)}
+                          >
+                            Delete Role
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -256,7 +270,7 @@ const Roles = () => {
           </Table>
         </CardContent>
         <CardFooter>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             Showing <strong>1-{roles.length}</strong> of <strong>{roles.length}</strong> roles
           </div>
         </CardFooter>
@@ -267,28 +281,40 @@ const Roles = () => {
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{editingRole ? 'Edit Role' : 'Create New Role'}</DialogTitle>
-              <DialogDescription>Set the name, description, and permissions for this role.</DialogDescription>
+              <DialogDescription>
+                Set the name, description, and permissions for this role.
+              </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label>Role Name</Label>
-                <Input value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="E.g., Product Manager" />
+                <Input
+                  value={roleName}
+                  onChange={(e) => setRoleName(e.target.value)}
+                  placeholder="E.g., Product Manager"
+                />
               </div>
 
               <div className="grid gap-2">
                 <Label>Description</Label>
-                <Textarea value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="A short description of this role." />
+                <Textarea
+                  value={roleDescription}
+                  onChange={(e) => setRoleDescription(e.target.value)}
+                  placeholder="A short description of this role."
+                />
               </div>
 
               <Separator />
 
               <div>
                 <h3 className="text-lg font-medium">Permissions</h3>
-                <p className="text-sm text-muted-foreground">Select the permissions this role should have.</p>
+                <p className="text-muted-foreground text-sm">
+                  Select the permissions this role should have.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
                 {permissionList.map((permission) => (
                   <div key={permission.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -302,11 +328,22 @@ const Roles = () => {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader className="animate-spin" /> : editingRole ? 'Edit Role' : 'Save Role'}
+                {isLoading ? (
+                  <Loader className="animate-spin" />
+                ) : editingRole ? (
+                  'Edit Role'
+                ) : (
+                  'Save Role'
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -324,7 +361,12 @@ const Roles = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-400 hover:bg-red-500 transition">Continue</AlertDialogAction>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-400 transition hover:bg-red-500"
+            >
+              Continue
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

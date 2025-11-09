@@ -1,4 +1,13 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,7 +20,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import {
   Table,
@@ -35,82 +50,76 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 const Users = () => {
-
   const [data, setData] = useState([])
-  const [dataLoading, setDataLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [roles, setRoles] = useState([]);
+  const [dataLoading, setDataLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [roles, setRoles] = useState([])
   const [open, setOpen] = useState(false)
 
-  const [editingUser, setEditingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null)
 
   const [userData, setUserData] = useState({
-    firstname: "",
-    lastname: "",
-    username: "",
-    email: "",
-    roleId: "",
-    role: ""
-  });
+    firstname: '',
+    lastname: '',
+    username: '',
+    email: '',
+    roleId: '',
+    role: '',
+  })
 
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null)
 
   const updateUserData = (key, value) => {
-    setUserData(prev => ({ ...prev, [key]: value }));
-  };
+    setUserData((prev) => ({ ...prev, [key]: value }))
+  }
 
-  const API = useAxios();
+  const API = useAxios()
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers()
   }, [])
 
   const fetchUsers = async () => {
     try {
-      setDataLoading(true);
-      const res = await API.get('/users');
+      setDataLoading(true)
+      const res = await API.get('/users')
       if (res.data?.success && res.data?.data) {
-        setData(res.data.data);
+        setData(res.data.data)
       }
-    }
-    catch (ex) {
-      console.log(ex);
-      toast.error("Failed to get users");
-    }
-    finally {
+    } catch (ex) {
+      console.log(ex)
+      toast.error('Failed to get users')
+    } finally {
       setDataLoading(false)
     }
   }
 
   const fetchRoles = useCallback(async () => {
     try {
-      const res = await API.get('/rolepermissions/list');
+      const res = await API.get('/rolepermissions/list')
       if (res.data.success && res.data.data) {
-        setRoles(res.data.data);
+        setRoles(res.data.data)
       }
     } catch (ex) {
-      console.log(ex);
-      toast.error("Failed to get roles");
+      console.log(ex)
+      toast.error('Failed to get roles')
     }
-  }, [API]);
+  }, [API])
 
   useEffect(() => {
-    if (open) fetchRoles();
-  }, [open, fetchRoles]);
+    if (open) fetchRoles()
+  }, [open, fetchRoles])
 
   const columnHelper = createColumnHelper()
 
   const columns = [
-    columnHelper.accessor(
-      row => `${row.firstName} ${row.lastName}`,
-      {
-        id: "name",
-        header: "Name",
-      }
-    ),
-    columnHelper.accessor('username', { header: 'Username', cell: info => info.getValue() }),
-    columnHelper.accessor('email', { header: 'Email', cell: info => info.getValue() }),
-    columnHelper.accessor('role', { header: 'Role', cell: info => info.getValue() }),
+    columnHelper.accessor((row) => `${row.firstName} ${row.lastName}`, {
+      id: 'name',
+      header: 'Name',
+    }),
+    columnHelper.accessor('username', { header: 'Username', cell: (info) => info.getValue() }),
+    columnHelper.accessor('email', { header: 'Email', cell: (info) => info.getValue() }),
+    columnHelper.accessor('role', { header: 'Role', cell: (info) => info.getValue() }),
     columnHelper.display({
       id: 'actions',
       header: 'Actions',
@@ -120,22 +129,30 @@ const Users = () => {
             variant="outline"
             size="sm"
             onClick={() => {
-              const user = row.original;
-              setEditingUser(user);
+              const user = row.original
+              setEditingUser(user)
               setUserData({
                 firstname: user.firstName,
                 lastname: user.lastName,
                 username: user.username,
                 email: user.email,
                 roleId: user.roleId,
-                role: user.role
-              });
-              setOpen(true);
+                role: user.role,
+              })
+              setOpen(true)
             }}
           >
             Edit
           </Button>
-          <Button variant="destructive" size="sm" onClick={()=>{handleDelete(row.original)}}>Delete</Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              handleDelete(row.original)
+            }}
+          >
+            Delete
+          </Button>
         </div>
       ),
     }),
@@ -154,10 +171,9 @@ const Users = () => {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
     try {
       if (editingUser) {
         await API.put(`/users/${editingUser.id}`, userData)
@@ -167,7 +183,7 @@ const Users = () => {
         toast.success(`User "${userData.username}" created successfully`)
       }
       setOpen(false)
-      fetchUsers();
+      fetchUsers()
     } catch (error) {
       toast.error(error?.response?.data?.message)
     } finally {
@@ -176,12 +192,11 @@ const Users = () => {
   }
 
   const resetPassword = async (e) => {
-    e.preventDefault();
-    toast.success("TODO: Password Reset Successfully");
+    e.preventDefault()
+    toast.success('TODO: Password Reset Successfully')
   }
 
-
-  const handleDelete = (user)=>{
+  const handleDelete = (user) => {
     setUserToDelete(user)
   }
 
@@ -190,11 +205,11 @@ const Users = () => {
     try {
       await API.delete(`/users/${userToDelete.id}`)
       toast.success(`User ${userToDelete.username} deleted successfully`)
-      fetchUsers();
+      fetchUsers()
     } catch (error) {
       toast.error(`Failed to delete user ${userToDelete.username}`)
     } finally {
-      setUserToDelete(null);
+      setUserToDelete(null)
     }
   }
 
@@ -210,80 +225,90 @@ const Users = () => {
           <DialogTrigger asChild>
             <Button
               onClick={() => {
-                setEditingUser(null);
+                setEditingUser(null)
                 setUserData({
-                  firstname: "",
-                  lastname: "",
-                  username: "",
-                  email: "",
-                  roleId: "",
-                  role: ""
-                });
-                setOpen(true);
+                  firstname: '',
+                  lastname: '',
+                  username: '',
+                  email: '',
+                  roleId: '',
+                  role: '',
+                })
+                setOpen(true)
               }}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Create User
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>{editingUser ? "Edit User" : "Create New User"}</DialogTitle>
+                <DialogTitle>{editingUser ? 'Edit User' : 'Create New User'}</DialogTitle>
                 <DialogDescription>
-                  Fill in the details to {editingUser ? "edit" : "add a new"} user.
+                  Fill in the details to {editingUser ? 'edit' : 'add a new'} user.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="firstname" className="text-right">First Name</Label>
+                  <Label htmlFor="firstname" className="text-right">
+                    First Name
+                  </Label>
                   <Input
                     id="firstname"
                     value={userData.firstname}
-                    onChange={(e) => updateUserData("firstname", e.target.value)}
+                    onChange={(e) => updateUserData('firstname', e.target.value)}
                     className="col-span-3"
                     placeholder="Enter first name"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lastname" className="text-right">Last Name</Label>
+                  <Label htmlFor="lastname" className="text-right">
+                    Last Name
+                  </Label>
                   <Input
                     id="lastname"
                     value={userData.lastname}
-                    onChange={(e) => updateUserData("lastname", e.target.value)}
+                    onChange={(e) => updateUserData('lastname', e.target.value)}
                     className="col-span-3"
                     placeholder="Enter last name"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">Username</Label>
+                  <Label htmlFor="username" className="text-right">
+                    Username
+                  </Label>
                   <Input
                     id="username"
                     value={userData.username}
-                    onChange={(e) => updateUserData("username", e.target.value)}
+                    onChange={(e) => updateUserData('username', e.target.value)}
                     className="col-span-3"
                     placeholder="Enter username"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
                   <Input
                     id="email"
                     value={userData.email}
-                    onChange={(e) => updateUserData("email", e.target.value)}
+                    onChange={(e) => updateUserData('email', e.target.value)}
                     className="col-span-3"
                     placeholder="Enter email"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">Role</Label>
+                  <Label htmlFor="role" className="text-right">
+                    Role
+                  </Label>
                   <Select
                     value={userData.roleId}
                     onValueChange={(value) => {
-                      const selected = roles.find((r) => r.id === value);
-                      updateUserData("roleId", value);
-                      updateUserData("role", selected?.roleName || "");
+                      const selected = roles.find((r) => r.id === value)
+                      updateUserData('roleId', value)
+                      updateUserData('role', selected?.roleName || '')
                     }}
                   >
                     <SelectTrigger className="col-span-3 w-full">
@@ -302,13 +327,27 @@ const Users = () => {
               </div>
 
               <DialogFooter>
-                {editingUser && <Button type="button" variant="secondary" onClick={resetPassword}>Reset Password</Button>}
-                <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>Cancel</Button>
+                {editingUser && (
+                  <Button type="button" variant="secondary" onClick={resetPassword}>
+                    Reset Password
+                  </Button>
+                )}
                 <Button
-                  type="submit"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader className="animate-spin" /> : editingUser ? 'Save Changes' : 'Create User'}
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader className="animate-spin" />
+                  ) : editingUser ? (
+                    'Save Changes'
+                  ) : (
+                    'Create User'
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -318,14 +357,14 @@ const Users = () => {
 
       <Separator className="my-4" />
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="mb-4 flex items-center gap-2">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search users..."
             className="pl-8"
             value={globalFilter ?? ''}
-            onChange={e => setGlobalFilter(e.target.value)}
+            onChange={(e) => setGlobalFilter(e.target.value)}
           />
         </div>
       </div>
@@ -333,9 +372,9 @@ const Users = () => {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
+                {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -344,38 +383,34 @@ const Users = () => {
             ))}
           </TableHeader>
           <TableBody>
-            {
-              dataLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6">
-                    <Loader className="mx-auto size-6 animate-spin" />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map(row => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map(cell => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="text-center">
-                      No matching users found.
+            {dataLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="py-6 text-center">
+                  <Loader className="mx-auto size-6 animate-spin" />
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
-                  </TableRow>
-                )
-              )
-            }
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center">
+                  No matching users found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2 mt-4">
+      <div className="mt-4 flex items-center justify-end space-x-2">
         <Button
           variant="outline"
           size="sm"
@@ -405,11 +440,15 @@ const Users = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-400 hover:bg-red-500 transition">Continue</AlertDialogAction>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-400 transition hover:bg-red-500"
+            >
+              Continue
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   )
 }

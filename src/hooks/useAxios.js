@@ -1,9 +1,9 @@
-import { useAuth } from "@/context/AuthContext";
-import axios from "axios";
-import { useEffect, useMemo } from "react";
+import { useAuth } from '@/context/AuthContext'
+import axios from 'axios'
+import { useEffect, useMemo } from 'react'
 
 const useAxios = () => {
-  const { logout } = useAuth();
+  const { logout } = useAuth()
 
   const API = useMemo(
     () =>
@@ -11,24 +11,24 @@ const useAxios = () => {
         baseURL: import.meta.env.VITE_API_BASE_URL,
         withCredentials: true,
       }),
-    []
-  );
+    [],
+  )
 
   useEffect(() => {
     const interceptor = API.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          logout();
+          logout()
         }
-        return Promise.reject(error);
-      }
-    );
+        return Promise.reject(error)
+      },
+    )
 
-    return () => API.interceptors.response.eject(interceptor);
-  }, [API, logout]);
+    return () => API.interceptors.response.eject(interceptor)
+  }, [API, logout])
 
-  return API;
-};
+  return API
+}
 
-export default useAxios;
+export default useAxios
