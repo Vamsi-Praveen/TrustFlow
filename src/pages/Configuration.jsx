@@ -49,8 +49,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import useAxios from '@/hooks/useAxios'
 import { Bell, Mail, MoreHorizontal, PlusCircle, Save, Slack, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 // --- MOCK DATA ---
 const mockData = {
@@ -91,6 +93,41 @@ const Configurations = () => {
   const [activeTab, setActiveTab] = useState('statuses')
   const [itemName, setItemName] = useState('')
 
+  const [config, setConfig] = useState({
+    smtpConfig: {
+      host: '',
+      port: 465,
+      enableSsl: true,
+      userName: '',
+      password: '',
+      fromEmail: '',
+      displayName: '',
+      senderName: '',
+    },
+    teamsConfig: {
+      tenantId: '',
+      clientSecret: '',
+      clientId: '',
+      scope: '',
+      grantType: '',
+      tokenUrl: '',
+    },
+    slackConfig: {
+      slackWebhookURL: '',
+      slackAppName: '',
+      slackChannelName: '',
+      slackBotToken: '',
+      slackBotName: '',
+      slackBaseAddress: '',
+    },
+  })
+
+  const [configStatus, setConfigStatus] = useState({
+    smtp: false,
+    slack: false,
+    teams: false,
+  })
+
   const activeConfig = configTabs.find((tab) => tab.value === activeTab)
 
   const handleCreateClick = () => {
@@ -114,6 +151,62 @@ const Configurations = () => {
     setIsItemDialogOpen(false)
   }
 
+  const API = useAxios()
+
+  const fetchSystemSettings = async () => {
+    try {
+      const res = API.get('/systemsettings')
+      if (res?.data?.success && res?.data?.data) {
+        const smtpConfig = res?.data?.data?.smtpConfig
+        const teamsConfig = res?.data?.data?.teamsConfig
+        const slackConfig = res?.data?.data?.slackConfig
+        setConfigStatus((prev) => ({
+          ...prev,
+          smtp: !!smtpConfig,
+          teams: !!teamsConfig,
+          slack: !!slackConfig,
+        }))
+        setConfig((prev) => ({
+          ...prev,
+          smtpConfig: {
+            displayName: smtpConfig?.displayName,
+            enableSsl: smtpConfig?.enableSsl,
+            host: smtpConfig?.host,
+            port: smtpConfig?.port,
+            userName: smtpConfig.userName,
+            password: smtpConfig.password,
+            fromEmail: smtpConfig.fromEmail,
+            senderName: smtpConfig.senderName,
+          },
+          teamsConfig: {
+            tenantId: teamsConfig?.tenantId,
+            clientSecret: teamsConfig?.clientSecret,
+            clientId: teamsConfig?.clientId,
+            scope: teamsConfig?.scope,
+            grantType: teamsConfig?.grantType,
+            tokenUrl: teamsConfig?.tokenUrl,
+          },
+          slackConfig: {
+            slackWebhookURL: slackConfig?.slackWebhookURL,
+            slackAppName: slackConfig?.slackAppName,
+            slackChannelName: slackConfig?.slackChannelName,
+            slackBotToken: slackConfig?.slackBotToken,
+            slackBotName: slackConfig?.slackBotName,
+            slackBaseAddress: slackConfig?.slackBaseAddress,
+          },
+        }))
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.message)
+    } finally {
+    }
+  }
+
+  useEffect(() => {
+    fetchSystemSettings()
+  }, [])
+
   return (
     <div className="min-h-screen flex-1 space-y-4">
       <div className="space-y-2">
@@ -133,7 +226,6 @@ const Configurations = () => {
           <TabsTrigger value="settings">System Settings</TabsTrigger>
         </TabsList>
 
-        {/* --- Item Management Tabs (Statuses, Priorities, etc.) --- */}
         {configTabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value} onFocus={() => setActiveTab(tab.value)}>
             <Card>
@@ -192,7 +284,6 @@ const Configurations = () => {
           </TabsContent>
         ))}
 
-        {/* --- System Settings Tab --- */}
         <TabsContent value="settings">
           <Card>
             <CardHeader>
@@ -203,7 +294,6 @@ const Configurations = () => {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {/* 1. Email SMTP Config */}
                 <AccordionItem value="smtp">
                   <AccordionTrigger className="text-md font-medium hover:no-underline">
                     <div className="flex items-center gap-3">
@@ -245,7 +335,6 @@ const Configurations = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* 2. Slack Integration */}
                 <AccordionItem value="slack">
                   <AccordionTrigger className="text-md font-medium hover:no-underline">
                     <div className="flex items-center gap-3">
@@ -279,7 +368,6 @@ const Configurations = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* 3. Teams Integration */}
                 <AccordionItem value="teams">
                   <AccordionTrigger className="text-md font-medium hover:no-underline">
                     <div className="flex items-center gap-3">
@@ -313,7 +401,6 @@ const Configurations = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* 4. Notification Settings */}
                 <AccordionItem value="notifications">
                   <AccordionTrigger className="text-md font-medium hover:no-underline">
                     <div className="flex items-center gap-3">
@@ -321,11 +408,11 @@ const Configurations = () => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="bg-background rounded-b-md p-4">
-                    <form className="space-y-6">
-                      <div className="space-y-2">
+                    <form className="space-y-4">
+                      <div className="flex gap-2">
                         <Label>Default Method</Label>
                         <Select defaultValue="email">
-                          <SelectTrigger>
+                          <SelectTrigger className="min-w-48">
                             <SelectValue placeholder="Select a default notification method" />
                           </SelectTrigger>
                           <SelectContent>
@@ -335,11 +422,11 @@ const Configurations = () => {
                             <SelectItem value="teams-dm">Microsoft Teams DM</SelectItem>
                           </SelectContent>
                         </Select>
-                        <p className="text-muted-foreground text-xs">
-                          This is the default notification method for new users. Users can override
-                          this in their personal settings.
-                        </p>
                       </div>
+                      <p className="text-muted-foreground text-xs">
+                        This is the default notification method for new users. Users can override
+                        this in their personal settings.
+                      </p>
                       <div className="flex items-center justify-between">
                         <p className="text-muted-foreground text-xs">Last saved 1 hour ago</p>
                         <Button type="submit">
@@ -355,7 +442,6 @@ const Configurations = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog for Creating/Editing Items (Statuses, Priorities, etc.) */}
       <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <form onSubmit={handleItemSubmit}>
@@ -387,7 +473,6 @@ const Configurations = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Alert Dialog for Deleting Items */}
       <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
