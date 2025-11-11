@@ -168,7 +168,7 @@ const Dashboard = () => {
   const { user } = useAuth() || { user: { firstName: 'Default', lastName: 'User', roles: [] } }; 
 
   // Safely check if the user exists and has the 'Administrator' role
-  const isAdmin = user && user.role.includes('Administrators');
+  const isAdmin = user && user.role.includes('Administrator');
 
   return (
     <div className="flex-1 space-y-4">
