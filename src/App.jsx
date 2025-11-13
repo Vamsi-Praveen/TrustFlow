@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { Toaster } from './components/ui/sonner'
 import AuthProvider from './context/AuthContext'
@@ -16,6 +16,7 @@ import Settings from './pages/Settings'
 import ProjectDetails from './pages/ProjectDetails'
 import ConfigurePassword from './pages/ConfigurePassword'
 import RedirectRoute from './components/RedirectRoute'
+import PasswordReset from './pages/PasswordReset'
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
               <Route path="/auth/login" element={<Login />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="users" element={<Users />} />
                   <Route path="projects" element={<Projects />} />
@@ -36,10 +38,11 @@ const App = () => {
                   <Route path="configuration" element={<Configurations />} />
                   <Route path="issues" element={<Issues />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="/auth/configurepassword" element={<ConfigurePassword />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
-              <Route path="/auth/configurepassword" element={<ConfigurePassword />} />
+              <Route path="/auth/resetpassword/:token" element={<PasswordReset />} />
             </Routes>
           </RedirectRoute>
         </BrowserRouter>

@@ -19,8 +19,6 @@ const RedirectRoute = ({ children }) => {
       } else if (needsPasswordChange && (isAuthPage || isPasswordChangePage)) {
         navigate('/dashboard', { replace: true })
       }
-    } else if (!isAuthPage) {
-      navigate('/auth/login', { state: { from: location }, replace: true })
     }
   }, [isAuthenticated, needsPasswordChange, isLoading, navigate, location])
 

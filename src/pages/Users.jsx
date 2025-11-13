@@ -59,6 +59,7 @@ const Users = () => {
   const [bulkOpen, setBulkOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const fileInputRef = useRef(null)
+  const [passwordReset, setPasswordReset] = useState(false)
 
   const [editingUser, setEditingUser] = useState(null)
 
@@ -197,7 +198,20 @@ const Users = () => {
 
   const resetPassword = async (e) => {
     e.preventDefault()
-    toast.success('TODO: Password Reset Successfully')
+    try {
+      setPasswordReset(true)
+      const payload = {
+        to: editingUser?.email,
+        userName: editingUser?.username,
+      }
+      await API.post('/email/sendpasswordresetmail', payload)
+      toast.success('Password Reset Mail Sent Succesfully')
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.message)
+    } finally {
+    }
+    setPasswordReset(false)
   }
 
   const handleDelete = (user) => {
@@ -219,7 +233,6 @@ const Users = () => {
 
   const handleOpenChange = (isOpen) => {
     if (!isOpen) {
-      // Reset state when the dialog is closed
       setSelectedFile(null)
       setIsLoading(false)
     }
@@ -402,8 +415,19 @@ const Users = () => {
 
                 <DialogFooter>
                   {editingUser && (
-                    <Button type="button" variant="secondary" onClick={resetPassword}>
-                      Reset Password
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={resetPassword}
+                      disabled={passwordReset}
+                    >
+                      {passwordReset ? (
+                        <>
+                          <Loader className="mr-2 h-5 w-5 animate-spin" /> Sending...
+                        </>
+                      ) : (
+                        'Reset Password'
+                      )}
                     </Button>
                   )}
                   <Button
@@ -522,7 +546,7 @@ const Users = () => {
                   <Button type="submit" disabled={isLoading || !selectedFile}>
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+                        <Loader className="mr-2 h-4 w-4 animate-spin" /> Uploading...
                       </>
                     ) : (
                       <>
