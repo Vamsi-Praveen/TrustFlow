@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { Toaster } from './components/ui/sonner'
 import AuthProvider from './context/AuthContext'
@@ -27,6 +27,7 @@ const App = () => {
               <Route path="/auth/login" element={<Login />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="users" element={<Users />} />
                   <Route path="projects" element={<Projects />} />

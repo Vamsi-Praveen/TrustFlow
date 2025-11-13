@@ -67,44 +67,26 @@ import {
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-// --- MOCK DATA ---
-const mockData = {
-  statuses: [
-    { id: 'stat_1', name: 'To Do' },
-    { id: 'stat_2', name: 'In Progress' },
-    { id: 'stat_4', name: 'Done' },
-  ],
-  priorities: [
-    { id: 'pri_1', name: 'Low' },
-    { id: 'pri_2', name: 'Medium' },
-    { id: 'pri_3', name: 'High' },
-  ],
-  severities: [
-    { id: 'sev_1', name: 'Minor' },
-    { id: 'sev_2', name: 'Major' },
-    { id: 'sev_3', name: 'Blocker' },
-  ],
-  types: [
-    { id: 'type_1', name: 'Bug' },
-    { id: 'type_2', name: 'Feature Request' },
-    { id: 'type_3', name: 'Task' },
-  ],
-}
-
-const configTabs = [
-  { value: 'statuses', label: 'Statuses', data: mockData.statuses },
-  { value: 'priorities', label: 'Priorities', data: mockData.priorities },
-  { value: 'severities', label: 'Severities', data: mockData.severities },
-  { value: 'types', label: 'Types', data: mockData.types },
-]
-// --- END MOCK DATA ---
-
 const Configurations = () => {
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [activeTab, setActiveTab] = useState('statuses')
   const [itemName, setItemName] = useState('')
+
+  const [issueConfig, setIssueConfig] = useState({
+    statuses: [],
+    priorities: [],
+    severities: [],
+    types: [],
+  })
+
+  const configTabs = [
+    { value: 'statuses', label: 'Statuses', data: issueConfig?.statuses },
+    { value: 'priorities', label: 'Priorities', data: issueConfig?.priorities },
+    { value: 'severities', label: 'Severities', data: issueConfig?.severities },
+    { value: 'types', label: 'Types', data: issueConfig?.types },
+  ]
 
   const [config, setConfig] = useState({
     smtpConfig: {
@@ -164,6 +146,10 @@ const Configurations = () => {
     slack: false,
     teams: false,
     portal: false,
+    status: false,
+    priority: false,
+    severity: false,
+    type: false,
   })
   const activeConfig = configTabs.find((tab) => tab.value === activeTab)
 
@@ -279,7 +265,42 @@ const Configurations = () => {
     }
   }
 
+  const fetchIssueConfigurations = async () => {
+    try {
+      setConfigLoading((prev) => ({
+        ...prev,
+        status: true,
+        severity: true,
+        priority: true,
+        type: true,
+      }))
+
+      const res = await API.get('/systemsettings/issues-config')
+      if (res?.data?.success && res?.data?.data) {
+        setIssueConfig((prev) => ({
+          ...prev,
+          statuses: res?.data?.data?.issueStatus,
+          priorities: res?.data?.data?.issuePriority,
+          types: res?.data?.data?.issueTypes,
+          severities: res?.data?.data?.issueSeverity,
+        }))
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.message || 'Unable to fetch the configurations')
+    } finally {
+      setConfigLoading((prev) => ({
+        ...prev,
+        status: false,
+        severity: false,
+        priority: false,
+        type: false,
+      }))
+    }
+  }
+
   useEffect(() => {
+    fetchIssueConfigurations()
     fetchSystemSettings()
   }, [])
 
@@ -465,6 +486,7 @@ const Configurations = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
+                      <TableHead>Description</TableHead>
                       <TableHead>
                         <span className="sr-only">Actions</span>
                       </TableHead>
@@ -473,7 +495,8 @@ const Configurations = () => {
                   <TableBody>
                     {tab.data.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell className="font-medium">{item?.name}</TableCell>
+                        <TableCell className="font-medium">{item?.description}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -778,7 +801,8 @@ const Configurations = () => {
                 <AccordionItem value="teams">
                   <AccordionTrigger className="text-md font-medium hover:no-underline">
                     <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5" /> Microsoft Teams Integration{' '}
+                      <img src="/assets/images/teams.svg" className="h-5 w-5 object-contain" />{' '}
+                      Microsoft Teams Integration{' '}
                       {!configStatus?.teams && <Badge variant="outline">Not Configured</Badge>}
                     </div>
                   </AccordionTrigger>
@@ -913,6 +937,20 @@ const Configurations = () => {
                         </div>
                       </div>
                     </form>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="telegram" disabled>
+                  <AccordionTrigger className="text-md font-medium hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <img src="/assets/images/telegram.svg" className="h-5 w-5 object-contain" />{' '}
+                      Telegram Integration{' '}
+                      {!configStatus?.telegram && <Badge variant="outline">Not Configured</Badge>}
+                    </div>
+                  </AccordionTrigger>
+
+                  <AccordionContent className="bg-background rounded-b-md p-4">
+                    <form></form>
                   </AccordionContent>
                 </AccordionItem>
 
