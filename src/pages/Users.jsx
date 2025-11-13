@@ -56,6 +56,7 @@ const Users = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [roles, setRoles] = useState([])
   const [open, setOpen] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const fileInputRef = useRef(null)
 
@@ -222,7 +223,7 @@ const Users = () => {
       setSelectedFile(null)
       setIsLoading(false)
     }
-    setOpen(isOpen)
+    setBulkOpen(isOpen)
   }
 
   const handleFileChange = (event) => {
@@ -426,7 +427,7 @@ const Users = () => {
               </form>
             </DialogContent>
           </Dialog>
-          <Dialog open={open} onOpenChange={handleOpenChange}>
+          <Dialog open={bulkOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <CloudUpload className="mr-2 h-4 w-4" />

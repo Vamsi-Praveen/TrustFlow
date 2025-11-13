@@ -36,6 +36,7 @@ const Settings = () => {
       firstName: user?.firstName,
       lastName: user?.lastName,
       email: user?.email,
+      username: user?.username,
     }),
     [user],
   )
@@ -45,7 +46,8 @@ const Settings = () => {
   const isProfileDirty =
     profile.firstName !== originalProfile.firstName ||
     profile.lastName !== originalProfile.lastName ||
-    profile.email !== originalProfile.email
+    profile.email !== originalProfile.email ||
+    profile.username !== originalProfile.username
 
   const [password, setPassword] = useState({
     currentPassword: '',
@@ -90,6 +92,7 @@ const Settings = () => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        username: user.username,
       })
     }
   }, [user])
@@ -235,17 +238,27 @@ const Settings = () => {
                         onChange={handleProfileChange}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        type="text"
+                        value={profile.username}
+                        onChange={handleProfileChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile.email}
+                        disabled
+                        onChange={handleProfileChange}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profile.email}
-                      disabled
-                      onChange={handleProfileChange}
-                    />
-                  </div>
+
                   <div className="flex justify-end">
                     <Button type="submit" disabled={loading.profile || !isProfileDirty}>
                       {loading.profile ? (

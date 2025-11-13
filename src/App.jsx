@@ -14,29 +14,34 @@ import Projects from './pages/Projects'
 import Roles from './pages/Roles'
 import Settings from './pages/Settings'
 import ProjectDetails from './pages/ProjectDetails'
+import ConfigurePassword from './pages/ConfigurePassword'
+import RedirectRoute from './components/RedirectRoute'
 
 const App = () => {
   return (
     <>
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/auth/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Layout />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="users" element={<Users />} />
-                <Route path="projects" element={<Projects />} />
-                <Route path="projectdetails/:projectId" element={<ProjectDetails />} />
-                <Route path="roles" element={<Roles />} />
-                <Route path="members" element={<Members />} />
-                <Route path="configuration" element={<Configurations />} />
-                <Route path="issues" element={<Issues />} />
-                <Route path="settings" element={<Settings />} />
+          <RedirectRoute>
+            <Routes>
+              <Route path="/auth/login" element={<Login />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Layout />}>
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="projects" element={<Projects />} />
+                  <Route path="projectdetails/:projectId" element={<ProjectDetails />} />
+                  <Route path="roles" element={<Roles />} />
+                  <Route path="members" element={<Members />} />
+                  <Route path="configuration" element={<Configurations />} />
+                  <Route path="issues" element={<Issues />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+              <Route path="/auth/configurepassword" element={<ConfigurePassword />} />
+            </Routes>
+          </RedirectRoute>
         </BrowserRouter>
       </AuthProvider>
       <Toaster richColors position="top-right" />

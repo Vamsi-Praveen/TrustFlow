@@ -16,22 +16,27 @@ const AuthProvider = ({ children }) => {
     return userPermissions.includes(permission)
   }
 
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false)
+
   const fetchCurrentUser = useCallback(async () => {
     try {
       const res = await api.get('/users/me')
       if (res.data?.success && res.data?.data) {
-        setUser(res.data.data.result)
-        setRole(res?.data?.data.result.role)
-        setUserPermissions(res.data.data.result.permissions)
+        setUser(res?.data?.data?.result)
+        setRole(res?.data?.data?.result?.role)
+        setUserPermissions(res?.data?.data?.result?.permissions)
+        setNeedsPasswordChange(res?.data?.data?.result?.defaultPasswordChanged)
       } else {
         setUser(null)
         setUserPermissions(null)
         setRole(null)
+        setNeedsPasswordChange(false)
       }
     } catch {
       setUser(null)
       setUserPermissions(null)
       setRole(null)
+      setNeedsPasswordChange(false)
     } finally {
       setIsLoading(false)
     }
@@ -75,6 +80,7 @@ const AuthProvider = ({ children }) => {
     login,
     logout,
     fetchCurrentUser,
+    needsPasswordChange,
     hasPermission,
     userPermissions,
     role,
