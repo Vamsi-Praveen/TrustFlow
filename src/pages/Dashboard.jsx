@@ -1,3 +1,6 @@
+import AdminDashboard from '@/components/AdminDashboard'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -14,7 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import UserDashboard from '@/components/UserDashboard'
 import { useAuth } from '@/context/AuthContext'
+import useAxios from '@/hooks/useAxios'
 import {
   Activity,
   Bug,
@@ -25,9 +30,8 @@ import {
   Shield,
   Users,
 } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
 // --- MOCK DATA ---
 const mockAdminStats = {
@@ -36,6 +40,8 @@ const mockAdminStats = {
   activeSessions: 12,
   issuesCreatedToday: 34,
 };
+
+
 
 const mockUserStats = {
   myOpenIssues: 8,
@@ -79,96 +85,16 @@ const getPriorityBadgeVariant = (priority) => {
         default: return 'default';
     }
 }
-// --- END MOCK DATA ---
-
-const AdminDashboard = () => (
-  <div className="space-y-6">
-    {/* Top Stat Cards */}
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Users</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockAdminStats.totalUsers}</div></CardContent></Card>
-      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Projects</CardTitle><FolderKanban className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockAdminStats.totalProjects}</div></CardContent></Card>
-      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Active Sessions</CardTitle><Activity className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockAdminStats.activeSessions}</div></CardContent></Card>
-      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Issues Created Today</CardTitle><Clock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockAdminStats.issuesCreatedToday}</div></CardContent></Card>
-    </div>
-
-    {/* Main Content Grid */}
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader><CardTitle>Global Activity Feed</CardTitle><CardDescription>Recent important events across the system.</CardDescription></CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Action</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
-            <TableBody>{mockAdminActivity.map((activity) => (<TableRow key={activity.id}><TableCell className="font-medium">{activity.user}</TableCell><TableCell>{activity.action}</TableCell><TableCell className="text-gray-500">{activity.date}</TableCell></TableRow>))}</TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader><CardTitle>Admin Quick Actions</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <Link to="/users"><Button variant="outline" className="w-full justify-start"><Users className="mr-2 h-4 w-4"/> Manage Users</Button></Link>
-            <Link to="/roles"><Button variant="outline" className="w-full justify-start"><Shield className="mr-2 h-4 w-4"/> Manage Roles</Button></Link>
-            <Link to="/configurations"><Button variant="outline" className="w-full justify-start"><Settings className="mr-2 h-4 w-4"/> System Configurations</Button></Link>
-          </CardContent>
-        </Card>
-        <Card>
-            <CardHeader><CardTitle>Role Overview</CardTitle><CardDescription>Distribution of users across roles.</CardDescription></CardHeader>
-            <CardContent className="space-y-4">
-                {mockRoleOverview.map(role => (
-                    <div key={role.name} className="flex items-center justify-between">
-                        <div className="text-sm font-medium">{role.name}</div>
-                        <Badge variant="secondary">{role.count} Users</Badge>
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-      </div>
-    </div>
-  </div>
-);
 
 
-const UserDashboard = () => (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">My Open Issues</CardTitle><Bug className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockUserStats.myOpenIssues}</div><p className="text-xs text-muted-foreground">{mockUserStats.overdueIssues} are overdue</p></CardContent></Card>
-            <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">My Projects</CardTitle><FolderKanban className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockUserStats.myProjects}</div></CardContent></Card>
-            <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Issues Resolved by Me</CardTitle><CheckCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockUserStats.resolvedByMe}</div></CardContent></Card>
-            <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">My Recent Activity</CardTitle><Activity className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{mockUserActivity.length}</div><p className="text-xs text-muted-foreground">events in the last 24 hours</p></CardContent></Card>
-        </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-                <CardHeader><CardTitle>My Open Issues</CardTitle><CardDescription>A list of issues currently assigned to you.</CardDescription></CardHeader>
-                <CardContent>
-                    <Table><TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Project</TableHead><TableHead>Priority</TableHead></TableRow></TableHeader><TableBody>{mockMyOpenIssues.map((issue) => (<TableRow key={issue.id}><TableCell><div className="font-medium">{issue.id}</div><div className="text-sm text-muted-foreground">{issue.title}</div></TableCell><TableCell>{issue.project}</TableCell><TableCell><Badge variant={getPriorityBadgeVariant(issue.priority)}>{issue.priority}</Badge></TableCell></TableRow>))}</TableBody></Table>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader><CardTitle>My Recent Activity</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                {mockUserActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3">
-                        <Activity className="h-4 w-4 mt-1 text-muted-foreground"/>
-                        <div className="text-sm">
-                            <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-semibold">{activity.issue}</span>
-                            <div className="text-xs text-muted-foreground mt-1">{activity.date}</div>
-                        </div>
-                    </div>
-                 ))}
-                </CardContent>
-             </Card>
-        </div>
-    </div>
-);
 
 
 const Dashboard = () => {
-  // Use a fallback for development if AuthContext is not yet fully wired
   const { user } = useAuth() || { user: { firstName: 'Default', lastName: 'User', roles: [] } }; 
-
-  // Safely check if the user exists and has the 'Administrator' role
+  
   const isAdmin = user && user.role.includes('Administrator');
+
+  const API = useAxios();
 
   return (
     <div className="flex-1 space-y-4">
