@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
+import { toast } from 'sonner'
+import { Loader } from 'lucide-react'
 
 const Login = () => {
   const { login } = useAuth()
@@ -13,11 +15,9 @@ const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError(null)
     setLoading(true)
 
     try {
@@ -25,10 +25,10 @@ const Login = () => {
       if (res.data.success) {
         navigate('/dashboard')
       } else {
-        setError(res.message || 'Invalid credentials')
+        toast.error(res?.data?.message || 'Invalid Credentails')
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'An error occurred while logging in.')
+      toast.error(err?.response?.data?.message || 'An error occurred while logging in.')
     } finally {
       setLoading(false)
     }
@@ -78,11 +78,15 @@ const Login = () => {
                       required
                     />
                   </div>
-
-                  {error && <p className="mt-1 text-center text-sm text-red-500">{error}</p>}
-
                   <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
+                    {loading ? (
+                      <>
+                        <Loader className="mr-2 h-5 w-5 animate-spin" />
+                        Logging in...
+                      </>
+                    ) : (
+                      'Login'
+                    )}
                   </Button>
                 </div>
               </form>

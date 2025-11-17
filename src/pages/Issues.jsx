@@ -1,17 +1,20 @@
 import { MoreHorizontal, PlusCircle, Search, X } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +29,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -33,99 +43,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-
-// --- MOCK DATA ---
-const mockUsers = [
-  { id: 'usr_1', name: 'Liam Johnson', initial: 'LJ' },
-  { id: 'usr_2', name: 'Olivia Smith', initial: 'OS' },
-  { id: 'usr_3', name: 'Noah Williams', initial: 'NW' },
-  { id: 'usr_4', name: 'Emma Brown', initial: 'EB' },
-]
-
-const mockProjects = [
-  { id: 'proj_1', name: 'E-Commerce Platform' },
-  { id: 'proj_2', name: 'Mobile App' },
-  { id: 'proj_3', name: 'Reporting Service' },
-]
-
-const mockIssues = [
-  {
-    id: 'BUG-8782',
-    title: 'Button component overflows on mobile view',
-    project: mockProjects[0],
-    status: 'In Progress',
-    priority: 'High',
-    assignee: mockUsers[0],
-    lastUpdated: '2 hours ago',
-  },
-  {
-    id: 'TASK-4321',
-    title: 'Update user authentication flow',
-    project: mockProjects[1],
-    status: 'Backlog',
-    priority: 'Medium',
-    assignee: mockUsers[1],
-    lastUpdated: '1 day ago',
-  },
-  {
-    id: 'BUG-8780',
-    title: 'API returns 500 error on invalid date',
-    project: mockProjects[2],
-    status: 'Done',
-    priority: 'High',
-    assignee: mockUsers[2],
-    lastUpdated: '1 day ago',
-  },
-  {
-    id: 'FEAT-1123',
-    title: 'Implement dark mode toggle',
-    project: mockProjects[0],
-    status: 'To Do',
-    priority: 'Low',
-    assignee: mockUsers[3],
-    lastUpdated: '2 days ago',
-  },
-  {
-    id: 'BUG-8779',
-    title: 'Incorrect tax calculation for orders',
-    project: mockProjects[0],
-    status: 'In Progress',
-    priority: 'Critical',
-    assignee: mockUsers[0],
-    lastUpdated: '3 days ago',
-  },
-  {
-    id: 'TASK-5001',
-    title: 'Set up CI/CD pipeline for deployment',
-    project: mockProjects[1],
-    status: 'To Do',
-    priority: 'High',
-    assignee: null,
-    lastUpdated: '4 days ago',
-  },
-]
-
-const statuses = ['Backlog', 'To Do', 'In Progress', 'Done', 'Cancelled']
-const priorities = ['Low', 'Medium', 'High', 'Critical']
-// --- END MOCK DATA ---
+import useAxios from '@/hooks/useAxios'
 
 const getPriorityBadgeVariant = (priority) => {
   switch (priority?.toLowerCase()) {
@@ -143,6 +62,60 @@ const getPriorityBadgeVariant = (priority) => {
 }
 
 const Issues = () => {
+  const API = useAxios()
+
+  const [issues, setIssues] = useState([])
+  const [statuses, setStatuses] = useState([])
+  const [priorities, setPriorities] = useState([])
+  const [projects, setProjects] = useState([])
+  const [users, setUsers] = useState([])
+
+  const [open, setOpen] = useState(false)
+
+  const fetchIssues = async () => {
+    try {
+      const res = await API.get('/issues')
+      if (res?.data?.success && res?.data?.data) {
+        setIssues(res?.data?.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const res = await API.get('/users')
+      if (res?.data?.success && res?.data?.data) {
+        setUsers(res?.data?.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchIssueFilters = async () => {
+    try {
+      const res = await API.get('/issues/filters')
+      if (res?.data?.success && res?.data?.data) {
+        setPriorities(res?.data?.data?.priorities)
+        setStatuses(res?.data?.data?.statuses)
+        setProjects(res?.data?.data?.projects)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchIssues()
+    fetchIssueFilters()
+  }, [])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [open])
+
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -160,18 +133,20 @@ const Issues = () => {
   }
 
   const filteredIssues = useMemo(() => {
-    return mockIssues.filter((issue) => {
+    return issues.filter((issue) => {
       const searchMatch =
         issue.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        issue.id.toLowerCase().includes(filters.search.toLowerCase())
-      const statusMatch = filters.status === 'all' || issue.status === filters.status
-      const priorityMatch = filters.priority === 'all' || issue.priority === filters.priority
-      const assigneeMatch = filters.assignee === 'all' || issue.assignee?.id === filters.assignee
-      const projectMatch = filters.project === 'all' || issue.project.id === filters.project
+        issue.issueId.toLowerCase().includes(filters.search.toLowerCase())
 
-      return searchMatch && statusMatch && priorityMatch && assigneeMatch && projectMatch
+      const statusMatch = filters.status === 'all' || issue.status === filters.status
+
+      const priorityMatch = filters.priority === 'all' || issue.priority === filters.priority
+
+      const projectMatch = filters.project === 'all' || issue.projectId === filters.project
+
+      return searchMatch && statusMatch && priorityMatch && projectMatch
     })
-  }, [filters])
+  }, [filters, issues])
 
   return (
     <div className="flex-1 space-y-4">
@@ -183,7 +158,7 @@ const Issues = () => {
           </p>
         </div>
         <div>
-          <Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Create Issue
@@ -206,7 +181,7 @@ const Issues = () => {
                       <SelectValue placeholder="Select a project..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockProjects.map((p) => (
+                      {projects.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
                         </SelectItem>
@@ -242,9 +217,9 @@ const Issues = () => {
                         <SelectValue placeholder="Select a user" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mockUsers.map((u) => (
+                        {users.map((u) => (
                           <SelectItem key={u.id} value={u.id}>
-                            {u.name}
+                            {u.fullName}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -258,8 +233,8 @@ const Issues = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {priorities.map((p) => (
-                          <SelectItem key={p} value={p}>
-                            {p}
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -296,14 +271,14 @@ const Issues = () => {
                 value={filters.status}
                 onValueChange={(value) => handleFilterChange('status', value)}
               >
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   {statuses.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -312,25 +287,32 @@ const Issues = () => {
                 value={filters.priority}
                 onValueChange={(value) => handleFilterChange('priority', value)}
               >
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Priorities</SelectItem>
                   {priorities.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filters.project} onValueChange={value => handleFilterChange('project', value)}>
+              <Select
+                value={filters.project}
+                onValueChange={(value) => handleFilterChange('project', value)}
+              >
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Project" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
-                  {mockProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button variant="ghost" onClick={clearFilters}>
@@ -341,89 +323,97 @@ const Issues = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Issue</TableHead>
-                <TableHead className="hidden md:table-cell">Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Priority</TableHead>
-                <TableHead className="hidden md:table-cell">Assignee</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredIssues.map((issue) => (
-                <TableRow key={issue.id}>
-                  <TableCell>
-                    <div className="font-medium">{issue.id}</div>
-                    <div className="text-muted-foreground text-sm">{issue.title}</div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">{issue.project.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{issue.status}</Badge>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant={getPriorityBadgeVariant(issue.priority)}>
-                      {issue.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {issue.assignee ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={`/avatars/${issue.assignee.id}.png`} />
-                          <AvatarFallback className="text-xs">
-                            {issue.assignee.initial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{issue.assignee.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Unassigned</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            {statuses.map((s) => (
-                              <DropdownMenuItem key={s}>{s}</DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>Assign to</DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            {mockUsers.map((u) => (
-                              <DropdownMenuItem key={u.id}>{u.name}</DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Delete Issue</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="p-3">Issue</TableHead>
+                  <TableHead className="hidden p-3 md:table-cell">Project</TableHead>
+                  <TableHead className="p-3">Status</TableHead>
+                  <TableHead className="hidden p-3 sm:table-cell">Priority</TableHead>
+                  <TableHead className="hidden p-3 md:table-cell">Assignee</TableHead>
+                  <TableHead>
+                    <span className="sr-only p-3">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredIssues.map((issue) => (
+                  <TableRow key={issue.id}>
+                    <TableCell className="p-3">
+                      <div className="font-medium">{issue.issueId}</div>
+                      <div className="text-muted-foreground text-sm">{issue.title}</div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{issue.projectName}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {statuses.find((s) => s.id == issue.status)?.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge
+                        variant={getPriorityBadgeVariant(
+                          priorities.find((p) => p.id == issue.priority)?.name,
+                        )}
+                      >
+                        {priorities.find((p) => p.id == issue.priority)?.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {issue.assigneeUserIds[0] ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={`/avatars/${issue.assigneeUserIds[0]}.png`} />
+                            <AvatarFallback className="text-xs">
+                              {issue.assigneeUserNames[0].split('')[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{issue.assigneeUserNames[0]}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Unassigned</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              {statuses.map((s) => (
+                                <DropdownMenuItem key={s.id}>{s.name}</DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Assign to</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              {users.map((u) => (
+                                <DropdownMenuItem key={u.id}>{u.fullName}</DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600">Delete Issue</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
         <CardFooter>
           <div className="text-muted-foreground text-xs">
-            Showing <strong>{filteredIssues.length}</strong> of <strong>{mockIssues.length}</strong>{' '}
+            Showing <strong>{filteredIssues.length}</strong> of <strong>{issues?.length}</strong>{' '}
             issues
           </div>
         </CardFooter>

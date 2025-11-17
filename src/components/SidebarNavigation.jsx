@@ -1,5 +1,14 @@
 import { useAuth } from '@/context/AuthContext'
-import { Bug, Fingerprint, FolderGit2, Home, MonitorCog, Settings, UserCog2 } from 'lucide-react'
+import {
+  Bug,
+  FileChartColumn,
+  Fingerprint,
+  FolderGit2,
+  Home,
+  MonitorCog,
+  Settings,
+  UserCog2,
+} from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { Button } from './ui/button'
 
@@ -30,6 +39,12 @@ const SidebarNavigation = () => {
       icon: <Bug size={18} />,
       path: 'issues',
       permission: ['CanCreateBug', 'CanEditBug', 'CanChangeBugStatus', 'CanCommentOnBugs'],
+    },
+    {
+      name: 'Reports',
+      icon: <FileChartColumn size={18} />,
+      path: 'reports',
+      permission: ['CanManageAdminSettings'],
     },
     {
       name: 'Roles',

@@ -41,7 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import {
   Table,
   TableBody,
@@ -51,19 +50,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { timeAgo } from '@/helpers/TimeConversion'
 import useAxios from '@/hooks/useAxios'
-import {
-  Bell,
-  Loader,
-  Loader2,
-  Mail,
-  MoreHorizontal,
-  PlusCircle,
-  Save,
-  Slack,
-  Users,
-} from 'lucide-react'
+import { Bell, Loader, Loader2, Mail, MoreHorizontal, PlusCircle, Save, Slack } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -73,6 +63,7 @@ const Configurations = () => {
   const [itemToDelete, setItemToDelete] = useState(null)
   const [activeTab, setActiveTab] = useState('statuses')
   const [itemName, setItemName] = useState('')
+  const [itemDescription, setItemDescription] = useState('')
 
   const [issueConfig, setIssueConfig] = useState({
     statuses: [],
@@ -141,6 +132,8 @@ const Configurations = () => {
     portalConfig: {},
   })
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const [configLoading, setConfigLoading] = useState({
     smtp: false,
     slack: false,
@@ -153,28 +146,85 @@ const Configurations = () => {
   })
   const activeConfig = configTabs.find((tab) => tab.value === activeTab)
 
+  const [canSubmit, setCanSubmit] = useState(false)
+
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const isValid = itemName != '' && itemDescription != ''
+    setCanSubmit(isValid)
+  }, [itemName, itemDescription, setItemName, setItemDescription])
+
+  const [isItemDirty, setIsItemDirty] = useState(false)
+
+  useEffect(() => {
+    if (editingItem) {
+      const isDirty = editingItem.name != itemName || editingItem.description != itemDescription
+      setIsItemDirty(isDirty)
+    }
+  }, [editingItem, setEditingItem, itemDescription, itemName, setItemName, setItemDescription])
+
+  const API = useAxios()
+
   const handleCreateClick = () => {
     setEditingItem(null)
     setItemName('')
+    setItemDescription('')
     setIsItemDialogOpen(true)
   }
   const handleEditClick = (item) => {
     setEditingItem(item)
     setItemName(item.name)
+    setItemDescription(item.description)
     setIsItemDialogOpen(true)
   }
   const handleDeleteClick = (item) => setItemToDelete(item)
-  const confirmDelete = () => {
-    console.log(`Deleting ${activeConfig.label}: ${itemToDelete?.name}`)
-    setItemToDelete(null)
-  }
-  const handleItemSubmit = (event) => {
-    event.preventDefault()
-    console.log(`Saving ${activeConfig.label}:`, { id: editingItem?.id, name: itemName })
-    setIsItemDialogOpen(false)
-  }
 
-  const API = useAxios()
+  const confirmDelete = async () => {
+    setIsDeleting(true)
+    try {
+      await API.delete(
+        `/systemsettings/delete-issue-config/${activeConfig.value}/${itemToDelete.id}`,
+      )
+      toast.success(`${activeConfig.label} deleted successfully`)
+      fetchIssueConfigurations()
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.reponse?.data?.message)
+    } finally {
+      setIsDeleting(false)
+      setItemToDelete(null)
+    }
+  }
+  const handleItemSubmit = async (event) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    try {
+      if (editingItem) {
+        await API.put('/systemsettings/update-issue-config', {
+          id: editingItem.id,
+          itemType: activeConfig.value,
+          name: itemName,
+          description: itemDescription,
+        })
+        toast.success(`${activeConfig.label} updated succesfully`)
+        return
+      }
+      await API.post('/systemsettings/create-issue-config', {
+        itemType: activeConfig.value,
+        name: itemName,
+        description: itemDescription,
+      })
+      toast.success(`${activeConfig.label} added Succesfully`)
+    } catch (error) {
+      console.log(error)
+      toast.error(error?.response?.data?.message)
+    } finally {
+      fetchIssueConfigurations()
+      setIsItemDialogOpen(false)
+      setIsSubmitting(false)
+    }
+  }
 
   const fetchSystemSettings = async () => {
     try {
@@ -493,33 +543,44 @@ const Configurations = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tab.data.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item?.name}</TableCell>
-                        <TableCell className="font-medium">{item?.description}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onSelect={() => handleEditClick(item)}>
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onSelect={() => handleDeleteClick(item)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                    {configLoading.priority ||
+                    configLoading.severity ||
+                    configLoading.status ||
+                    configLoading.type ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-6 text-center">
+                          <Loader className="mx-auto size-6 animate-spin" />
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      tab.data.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item?.name}</TableCell>
+                          <TableCell className="font-medium">{item?.description}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => handleEditClick(item)}>
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onSelect={() => handleDeleteClick(item)}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -1020,10 +1081,10 @@ const Configurations = () => {
           <form onSubmit={handleItemSubmit}>
             <DialogHeader>
               <DialogTitle>
-                {editingItem ? 'Edit' : 'Create'} {activeConfig?.label.slice(0, -1)}
+                {editingItem ? 'Edit' : 'Create'} {activeConfig?.label}
               </DialogTitle>
               <DialogDescription>
-                Enter the name for the {activeConfig?.label.toLowerCase().slice(0, -1)}.
+                Enter the name for the {activeConfig?.label.toLowerCase()}.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -1031,16 +1092,33 @@ const Configurations = () => {
                 <Label htmlFor="item-name">Name</Label>
                 <Input
                   id="item-name"
+                  placeholder="Enter a name"
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="item-description">Description</Label>
+                <Textarea
+                  id="item-description"
+                  value={itemDescription}
+                  onChange={(e) => setItemDescription(e.target.value)}
+                  placeholder="Enter a description"
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => setIsItemDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsItemDialogOpen(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isSubmitting || !canSubmit || !isItemDirty}>
+                {isSubmitting ? <Loader className="h-5 w-5 animate-spin" /> : 'Save'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1052,13 +1130,19 @@ const Configurations = () => {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the item{' '}
-              <span className="font-bold">"{itemToDelete?.name}"</span>. This action cannot be
-              undone.
+              <span className="font-bold text-black">"{itemToDelete?.name}"</span>. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Loader className="mr-2 h-5 w-5 animate-spin" /> : 'Continue'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

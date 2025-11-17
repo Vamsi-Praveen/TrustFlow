@@ -37,6 +37,7 @@ const Settings = () => {
       lastName: user?.lastName,
       email: user?.email,
       username: user?.username,
+      phoneNumber: user?.phoneNumber,
     }),
     [user],
   )
@@ -47,7 +48,8 @@ const Settings = () => {
     profile.firstName !== originalProfile.firstName ||
     profile.lastName !== originalProfile.lastName ||
     profile.email !== originalProfile.email ||
-    profile.username !== originalProfile.username
+    profile.username !== originalProfile.username ||
+    profile.phoneNumber !== originalProfile.phoneNumber
 
   const [password, setPassword] = useState({
     currentPassword: '',
@@ -93,6 +95,7 @@ const Settings = () => {
         lastName: user.lastName,
         email: user.email,
         username: user.username,
+        phoneNumber: user.phoneNumber,
       })
     }
   }, [user])
@@ -248,15 +251,25 @@ const Settings = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="phoneNumber">Mobile</Label>
                       <Input
-                        id="email"
-                        type="email"
-                        value={profile.email}
-                        disabled
+                        id="phoneNumber"
+                        type="text"
+                        placeHolder="Mobile Number"
+                        value={profile?.phoneNumber}
                         onChange={handleProfileChange}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profile.email}
+                      disabled
+                      onChange={handleProfileChange}
+                    />
                   </div>
 
                   <div className="flex justify-end">

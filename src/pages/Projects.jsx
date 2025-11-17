@@ -8,7 +8,7 @@ import {
   Search,
   Users,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 
 import {
   AlertDialog,
@@ -65,18 +65,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/context/AuthContext'
 import { timeAgo } from '@/helpers/TimeConversion'
 import useAxios from '@/hooks/useAxios'
-import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
 const Projects = () => {
   const [projectToDelete, setProjectToDelete] = useState()
-
-  const [searchTerm, setSearchTerm] = useState('')
 
   const [projects, setProjects] = useState([])
 
@@ -97,6 +103,8 @@ const Projects = () => {
     managerUserName: '',
     members: [],
   })
+
+  const [globalFilter, setGlobalFilter] = useState('')
 
   const [open, setOpen] = useState(false)
 
@@ -160,10 +168,6 @@ const Projects = () => {
     setProjectToDelete(null)
   }
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
@@ -203,6 +207,105 @@ const Projects = () => {
       setIsLoading(false)
     }
   }
+
+  const columns = useMemo(() => {
+    const columnHelper = createColumnHelper()
+    return [
+      columnHelper.accessor('name', {
+        header: 'Project Name',
+        cell: (info) => <div className="font-medium">{info.getValue()}</div>,
+      }),
+      columnHelper.accessor('leadUserName', {
+        header: 'Lead',
+        cell: ({ row }) => {
+          const project = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage
+                  src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`}
+                />
+                <AvatarFallback>{project.leadUserName?.split('')[0]}</AvatarFallback>
+              </Avatar>
+              <span>{project.leadUserName}</span>
+            </div>
+          )
+        },
+      }),
+      columnHelper.accessor('openIssues', {
+        header: 'Open Issues',
+        cell: (info) => <Badge variant="outline">{info.getValue() || 0}</Badge>,
+      }),
+      columnHelper.accessor('members', {
+        header: 'Members',
+        cell: (info) => info.getValue()?.length || 0,
+      }),
+      columnHelper.accessor('updatedAt', {
+        header: 'Last Updated',
+        cell: (info) => timeAgo(info.getValue()),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        cell: ({ row }) => {
+          const project = row.original
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button aria-haspopup="true" size="icon" variant="ghost">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigate(`/projectdetails/${project.id}`)}>
+                  View Details
+                </DropdownMenuItem>
+                {hasPermission('CanEditProject') && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setProjectEditing(project)
+                      setProject(project)
+                      setOpen(true)
+                    }}
+                  >
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                {hasPermission('CanDeleteProject') && (
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onSelect={() => handleDeleteClick(project)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        },
+      }),
+    ]
+  }, [hasPermission, navigate])
+
+  const table = useReactTable({
+    data: projects,
+    columns,
+    state: { globalFilter },
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5,
+      },
+    },
+  })
+
+  const filteredProjectsForGrid = projects.filter((project) =>
+    project.name.toLowerCase().includes(globalFilter.toLowerCase()),
+  )
 
   return (
     <div className="flex-1 space-y-4">
@@ -366,117 +469,103 @@ const Projects = () => {
             <Input
               placeholder="Search projects..."
               className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
             />
           </div>
         </div>
 
         <TabsContent value="list">
           <Card>
-            <CardContent className="px-4 py-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Lead</TableHead>
-                    <TableHead className="hidden md:table-cell">Open Issues</TableHead>
-                    <TableHead className="hidden md:table-cell">Members</TableHead>
-                    <TableHead className="hidden sm:table-cell">Last Updated</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProjects.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell className="font-medium">{project.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6 border object-contain">
-                            <AvatarImage
-                              src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`}
-                              alt="Profile"
-                            />
-                            <AvatarFallback>{project.leadUserName?.split('')[0]}</AvatarFallback>
-                          </Avatar>
-                          <span>{project.leadUserName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant="outline">{project.openIssues || 0}</Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {project?.members?.length}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {timeAgo(project.updatedAt)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                navigate(`/projectdetails/${project.id}`)
-                              }}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                            {hasPermission('CanEditProject') && (
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setProjectEditing(project)
-                                  setProject({
-                                    name: project.name,
-                                    description: project.description,
-                                    leadUserId: project.leadUserId,
-                                    leadUserName: project.leadUserName,
-                                    managerUserId: project.managerUserId,
-                                    managerUserName: project.managerUserName,
-                                    members: project?.members,
-                                  })
-                                  setOpen(true)
-                                }}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                            )}
-                            {hasPermission('CanDeleteProject') && (
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onSelect={() => handleDeleteClick(project)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-            <CardFooter>
-              <div className="text-muted-foreground text-xs">
-                Showing <strong>1-{filteredProjects.length}</strong> of{' '}
-                <strong>{filteredProjects.length}</strong> projects
+            <CardContent className="px-3">
+              <div>
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} className="px-5">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {isDataLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          <Loader className="mx-auto h-6 w-6 animate-spin" />
+                        </TableCell>
+                      </TableRow>
+                    ) : table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className="px-4 py-3">
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          No projects found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-              <div className="ml-auto">
-                <Button size="sm" variant="outline" disabled>
-                  Previous
-                </Button>
-                <Button size="sm" variant="outline" className="ml-2">
-                  Next
-                </Button>
+            </CardContent>
+            <CardFooter className="flex items-center justify-between">
+              <div className="text-muted-foreground text-xs">
+                Showing <strong>{table.getRowModel().rows.length}</strong> of{' '}
+                <strong>{projects.length}</strong> projects.
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">Rows per page</p>
+                  <Select
+                    value={`${table.getState().pagination.pageSize}`}
+                    onValueChange={(value) => {
+                      table.setPageSize(Number(value))
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={table.getState().pagination.pageSize} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[5, 10, 20, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`}>
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm font-medium">
+                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </CardFooter>
           </Card>
@@ -484,7 +573,7 @@ const Projects = () => {
 
         <TabsContent value="grid">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
+            {filteredProjectsForGrid.map((project) => (
               <Card key={project.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -561,7 +650,7 @@ const Projects = () => {
               </Card>
             ))}
           </div>
-          {filteredProjects.length === 0 && (
+          {filteredProjectsForGrid.length === 0 && (
             <div className="text-muted-foreground py-12 text-center">
               <p>No projects found matching your search.</p>
             </div>

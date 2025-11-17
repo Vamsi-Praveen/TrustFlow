@@ -1,3 +1,4 @@
+import Loader from '@/components/Loader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,10 @@ const PasswordReset = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [canSubmit, setCanSubmit] = useState(false)
 
+  const [loading, setLoading] = useState(false)
+
+  const [tokenState, setTokenState] = useState('')
+
   useEffect(() => {
     const isValid =
       password.newPassword != '' &&
@@ -31,16 +36,37 @@ const PasswordReset = () => {
   }, [password, setPassword])
 
   useEffect(() => {
-    const validateToken = async () => {}
+    const validateToken = async () => {
+      setLoading(true)
+      if (!token) return
+      try {
+        const res = await API.post('/users/verifyresettoken', { token: token })
+        if (res?.data?.success) {
+          const state = res?.data?.data?.state
+          setTokenState(state)
+        }
+      } catch (error) {
+        console.log(error)
+        setTokenState(error?.response?.data?.data?.state)
+      } finally {
+        setLoading(false)
+      }
+    }
     validateToken()
   }, [token, API])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!canSubmit) return
+    if (password?.confirmPassword !== password?.newPassword) {
+      return toast.error("Passwords didn't match.")
+    }
+    if (password.newPassword.length < 8) {
+      return toast.error('Password length must be equal or greater than 8.')
+    }
     setIsLoading(true)
     try {
-      await API.post('/users/verifypasswordreset', { token, password })
+      await API.post('/users/passwordreset', { token, newPassword: password?.newPassword })
       toast.success('Your password has been reset successfully!')
       setIsSuccess(true)
     } catch (error) {
@@ -52,12 +78,15 @@ const PasswordReset = () => {
   }
 
   const renderContent = () => {
-    if (tokenState.status === 'invalid') {
+    if (tokenState == 'invalid' || tokenState == 'expired') {
       return (
         <CardContent className="flex flex-col items-center justify-center space-y-4">
           <AlertCircle className="text-destructive h-10 w-10" />
-          <p className="text-center font-medium">Link Invalid or Expired</p>
-          <p className="text-muted-foreground text-center text-sm">{tokenState.message}</p>
+          <p className="text-center font-medium">Invalid or Expired Link</p>
+          <p className="text-muted-foreground text-center text-sm">
+            This password reset link is no longer valid. Please request a new one or contact your
+            administrator for help.
+          </p>
         </CardContent>
       )
     }
@@ -111,6 +140,10 @@ const PasswordReset = () => {
         </form>
       </CardContent>
     )
+  }
+
+  if (loading) {
+    return <Loader />
   }
 
   return (

@@ -8,20 +8,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,13 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -45,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import {
   Table,
   TableBody,
@@ -54,6 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import useAxios from '@/hooks/useAxios'
+import { DialogClose } from '@radix-ui/react-dialog'
 import {
   createColumnHelper,
   flexRender,
@@ -62,18 +46,8 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import {
-  CloudUpload,
-  Download,
-  File,
-  Loader,
-  Loader2,
-  MoreHorizontal,
-  Plus,
-  Search,
-  X,
-} from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { CloudUpload, Download, Loader, Plus, Search } from 'lucide-react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const Users = () => {
@@ -87,8 +61,6 @@ const Users = () => {
   const fileInputRef = useRef(null)
   const [passwordReset, setPasswordReset] = useState(false)
 
-  const [globalFilter, setGlobalFilter] = useState('')
-
   const [editingUser, setEditingUser] = useState(null)
 
   const [userData, setUserData] = useState({
@@ -99,20 +71,6 @@ const Users = () => {
     roleId: '',
     role: '',
   })
-
-  const [canSubmit, setCanSubmit] = useState(false)
-
-  useEffect(() => {
-    const isValid =
-      userData.firstname != '' &&
-      userData.lastname != '' &&
-      userData.user != '' &&
-      userData.email != '' &&
-      userData.roleId != '' &&
-      userData.role != ''
-
-    setCanSubmit(isValid)
-  }, [userData, setUserData])
 
   const [userToDelete, setUserToDelete] = useState(null)
 
@@ -163,88 +121,59 @@ const Users = () => {
     columnHelper.accessor((row) => `${row.firstName} ${row.lastName}`, {
       id: 'name',
       header: 'Name',
-      cell: ({ row }) => {
-        const user = row.original
-        const name = `${user.firstName} ${user.lastName}`
-        return (
-          <div className="flex items-center gap-4">
-            <Avatar className="hidden h-9 w-9 sm:flex">
-              <AvatarImage src={`https://avatar.iran.liara.run/username?username=${name}`} />
-              <AvatarFallback>
-                {user.firstName?.[0]}
-                {user.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="grid gap-1">
-              <p className="text-sm leading-none font-medium">{name}</p>
-              <p className="text-muted-foreground text-sm">{user.email}</p>
-            </div>
-          </div>
-        )
-      },
     }),
-    columnHelper.accessor('username', { header: 'Username' }),
-    columnHelper.accessor('role', {
-      header: 'Role',
-      cell: (info) => <Badge variant="outline">{info.getValue()}</Badge>,
-    }),
+    columnHelper.accessor('username', { header: 'Username', cell: (info) => info.getValue() }),
+    columnHelper.accessor('email', { header: 'Email', cell: (info) => info.getValue() }),
+    columnHelper.accessor('role', { header: 'Role', cell: (info) => info.getValue() }),
     columnHelper.display({
       id: 'actions',
-      header: () => <div className="text-right">Actions</div>,
+      header: 'Actions',
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button aria-haspopup="true" size="icon" variant="ghost">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onSelect={() => {
-                  const user = row.original
-                  setEditingUser(user)
-                  setUserData({
-                    firstname: user.firstName,
-                    lastname: user.lastName,
-                    username: user.username,
-                    email: user.email,
-                    roleId: user.roleId,
-                    role: user.role,
-                  })
-                  setOpen(true)
-                }}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onSelect={() => handleDelete(row.original)}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const user = row.original
+              setEditingUser(user)
+              setUserData({
+                firstname: user.firstName,
+                lastname: user.lastName,
+                username: user.username,
+                email: user.email,
+                roleId: user.roleId,
+                role: user.role,
+              })
+              setOpen(true)
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              handleDelete(row.original)
+            }}
+          >
+            Delete
+          </Button>
         </div>
       ),
     }),
   ]
 
+  const [globalFilter, setGlobalFilter] = useState('')
   const table = useReactTable({
     data,
     columns,
     state: { globalFilter },
     onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, columnId, value) =>
+      String(row.getValue(columnId)).toLowerCase().includes(value.toLowerCase()),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
-    },
   })
 
   const handleSubmit = async (e) => {
@@ -371,13 +300,14 @@ const Users = () => {
   }
 
   return (
-    <div className="flex-1 space-y-4">
+    <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">Invite, manage, and remove application users.</p>
+          <h1 className="text-2xl font-bold">Users</h1>
+          <p className="text-sm text-gray-500">Manage application users</p>
         </div>
-        <div className="flex items-center space-x-2">
+
+        <div className="space-x-4">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button
@@ -504,11 +434,11 @@ const Users = () => {
                     type="button"
                     variant="outline"
                     onClick={() => setOpen(false)}
-                    disabled={passwordReset || isLoading}
+                    disabled={isLoading}
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={!canSubmit || isLoading || passwordReset}>
+                  <Button type="submit" disabled={isLoading}>
                     {isLoading ? (
                       <Loader className="animate-spin" />
                     ) : editingUser ? (
@@ -629,110 +559,80 @@ const Users = () => {
           </Dialog>
         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <Input
-              placeholder="Search by name, username, or email..."
-              className="w-full max-w-sm pl-8"
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="p-3">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </TableHead>
-                    ))}
-                  </TableRow>
+
+      <Separator className="my-4" />
+
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search users..."
+            className="pl-8"
+            value={globalFilter ?? ''}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
                 ))}
-              </TableHeader>
-              <TableBody>
-                {dataLoading ? (
-                  <TableRow className="p-5">
-                    <TableCell colSpan={columns.length} className="h-24 p-3 text-center">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {dataLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="py-6 text-center">
+                  <Loader className="mx-auto size-6 animate-spin" />
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
-                  </TableRow>
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="p-3">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 p-3 text-center">
-                      No users found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between">
-          <div className="text-muted-foreground text-xs">
-            Showing <strong>{table.getRowModel().rows.length}</strong> of{' '}
-            <strong>{data.length}</strong> users.
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">Rows per page</p>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue placeholder={table.getState().pagination.pageSize} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[5, 10, 20, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardFooter>
-      </Card>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center">
+                  No matching users found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="mt-4 flex items-center justify-end space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
+      </div>
 
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
         <AlertDialogContent>
