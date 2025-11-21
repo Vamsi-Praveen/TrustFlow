@@ -21,7 +21,13 @@ const Sidebar = () => {
       <div className="flex items-center gap-3 border-t pt-4">
         <Avatar className="h-10 w-10 border object-contain">
           <AvatarImage
-            src={`https://avatar.iran.liara.run/username?username=${user.firstName}+${user.lastName}`}
+            src={
+              user?.profilePictureUrl
+                ? user?.profilePictureUrl
+                : `https://avatar.iran.liara.run/username?username=${user?.firstName}+${user?.lastName}`
+            }
+            className="object-cover"
+            loading="lazy"
             alt="Profile"
           />
           <AvatarFallback>

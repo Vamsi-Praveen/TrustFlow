@@ -222,9 +222,7 @@ const Projects = () => {
           return (
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage
-                  src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`}
-                />
+                <AvatarImage src={project.leadProfilePicUrl} />
                 <AvatarFallback>{project.leadUserName?.split('')[0]}</AvatarFallback>
               </Avatar>
               <span>{project.leadUserName}</span>
@@ -582,7 +580,8 @@ const Projects = () => {
                       <CardDescription className="mt-2 flex items-center gap-2 py-2">
                         <Avatar className="h-5 w-5 border object-contain">
                           <AvatarImage
-                            src={`https://avatar.iran.liara.run/username?username=${project.leadUserName}`}
+                            src={project.leadProfilePicUrl}
+                            className="object-cover"
                             alt="Profile"
                           />
                           <AvatarFallback>{project.leadUserName?.split('')[0]}</AvatarFallback>
@@ -592,7 +591,8 @@ const Projects = () => {
                       <CardDescription className="flex items-center gap-2">
                         <Avatar className="h-5 w-5 border object-contain">
                           <AvatarImage
-                            src={`https://avatar.iran.liara.run/username?username=${project.managerUserName}`}
+                            src={project?.managerProfilePicUrl}
+                            className="object-cover"
                             alt="Profile"
                           />
                           <AvatarFallback>{project.managerUserName?.split('')[0]}</AvatarFallback>

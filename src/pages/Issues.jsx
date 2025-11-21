@@ -205,7 +205,7 @@ const Issues = () => {
                   </Label>
                   <Textarea
                     id="description"
-                    className="col-span-3"
+                    className="col-span-3 h-40"
                     placeholder="Provide a detailed description of the issue..."
                   />
                 </div>

@@ -11,14 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import {
   Dialog,
   DialogClose,
@@ -87,6 +80,10 @@ const Users = () => {
   const fileInputRef = useRef(null)
   const [passwordReset, setPasswordReset] = useState(false)
 
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const [userDeleting, setUserDeleting] = useState(false)
+
   const [globalFilter, setGlobalFilter] = useState('')
 
   const [editingUser, setEditingUser] = useState(null)
@@ -98,6 +95,7 @@ const Users = () => {
     email: '',
     roleId: '',
     role: '',
+    profilePictureUrl: '',
   })
 
   const [canSubmit, setCanSubmit] = useState(false)
@@ -169,11 +167,8 @@ const Users = () => {
         return (
           <div className="flex items-center gap-4">
             <Avatar className="hidden h-9 w-9 sm:flex">
-              <AvatarImage src={`https://avatar.iran.liara.run/username?username=${name}`} />
-              <AvatarFallback>
-                {user.firstName?.[0]}
-                {user.lastName?.[0]}
-              </AvatarFallback>
+              <AvatarImage className="object-cover" src={user?.profilePictureUrl} />
+              <AvatarFallback className="text-sm">{user?.firstName.split('')[0]}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <p className="text-sm leading-none font-medium">{name}</p>
@@ -287,18 +282,33 @@ const Users = () => {
 
   const handleDelete = (user) => {
     setUserToDelete(user)
+    setDeleteOpen(true)
   }
 
   const confirmDelete = async () => {
     if (!userToDelete) return
+
+    setUserDeleting(true)
+
     try {
-      await API.delete(`/users/${userToDelete.id}`)
-      toast.success(`User ${userToDelete.username} deleted successfully`)
-      fetchUsers()
+      const res = await API.delete(`/users/${userToDelete.id}`)
+
+      if (res?.data?.success) {
+        toast.success(`User ${userToDelete.username} deleted successfully`)
+        fetchUsers()
+      }
     } catch (error) {
-      toast.error(`Failed to delete user ${userToDelete.username}`)
+      const backendMessage = error?.response?.data?.message
+
+      if (error?.response?.status === 400 && backendMessage) {
+        toast.warning(backendMessage)
+      } else {
+        toast.error(error?.message || `Failed to delete user ${userToDelete.username}`)
+      }
     } finally {
+      setUserDeleting(false)
       setUserToDelete(null)
+      setDeleteOpen(false)
     }
   }
 
@@ -734,7 +744,7 @@ const Users = () => {
         </CardFooter>
       </Card>
 
-      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -743,12 +753,16 @@ const Users = () => {
               <span className="font-bold text-red-500"> "{userToDelete?.username}"</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={userDeleting}>Cancel</AlertDialogCancel>
+
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-red-400 transition hover:bg-red-500"
+              disabled={userDeleting}
+              className="flex items-center gap-2 bg-red-400 hover:bg-red-500"
             >
+              {userDeleting && <Loader className="h-5 w-5 animate-spin" />}
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -348,7 +348,8 @@ const ProjectDetails = () => {
             Led by{' '}
             <Avatar className="h-6 w-6 border object-contain">
               <AvatarImage
-                src={`https://avatar.iran.liara.run/username?username=${project?.leadUserName}`}
+                src={project?.leadProfilePicUrl}
+                className="object-cover"
                 alt="Profile"
               />
               <AvatarFallback>{project?.leadUserName?.split('')[0]}</AvatarFallback>
@@ -360,7 +361,7 @@ const ProjectDetails = () => {
           <div className="flex -space-x-2">
             {mockProject.members.slice(0, 4).map((member) => (
               <Avatar key={member.id} className="border-background h-8 w-8 border-2">
-                <AvatarImage src={`/avatars/${member.id}.png`} />
+                <AvatarImage src={`/avatars/${member.id}.png`} className="object-cover" />
                 <AvatarFallback>{member.initial}</AvatarFallback>
               </Avatar>
             ))}
@@ -489,7 +490,7 @@ const ProjectDetails = () => {
                   {mockProject.members.map((member) => (
                     <div key={member.id} className="flex items-center">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={`/avatars/${member.id}.png`} />
+                        <AvatarImage src={`/avatars/${member.id}.png`} className="object-cover" />
                         <AvatarFallback>{member.initial}</AvatarFallback>
                       </Avatar>
                       <div className="ml-4 space-y-1">
@@ -579,7 +580,10 @@ const ProjectDetails = () => {
                         {issue.assignee ? (
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
-                              <AvatarImage src={`/avatars/${issue.assignee.id}.png`} />
+                              <AvatarImage
+                                src={`/avatars/${issue.assignee.id}.png`}
+                                className="object-cover"
+                              />
                               <AvatarFallback className="text-xs">
                                 {issue.assignee.initial}
                               </AvatarFallback>
@@ -696,7 +700,8 @@ const ProjectDetails = () => {
                           <div className="flex items-center gap-4">
                             <Avatar className="h-6 w-6 border object-contain">
                               <AvatarImage
-                                src={`https://avatar.iran.liara.run/username?username=${member?.userName}`}
+                                src={member?.profilePicUrl}
+                                className="object-cover"
                                 alt="Profile"
                               />
                               <AvatarFallback>{member?.userName?.split('')[0]}</AvatarFallback>
@@ -744,7 +749,7 @@ const ProjectDetails = () => {
               {mockActivities.map((act, i) => (
                 <div key={i} className="flex items-start gap-4">
                   <Avatar>
-                    <AvatarImage src={`/avatars/${act.user.id}.png`} />
+                    <AvatarImage src={`/avatars/${act.user.id}.png`} className="object-cover" />
                     <AvatarFallback>{act.user.initial}</AvatarFallback>
                   </Avatar>
                   <div className="text-sm">

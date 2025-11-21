@@ -38,6 +38,12 @@ const SidebarNavigation = () => {
       name: 'Issues',
       icon: <Bug size={18} />,
       path: 'issues',
+      permission: ['CanManageAdminSettings'],
+    },
+    {
+      name: 'My Issues',
+      icon: <Bug size={18} />,
+      path: 'myissues',
       permission: ['CanCreateBug', 'CanEditBug', 'CanChangeBugStatus', 'CanCommentOnBugs'],
     },
     {

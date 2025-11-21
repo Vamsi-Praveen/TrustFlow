@@ -42,6 +42,10 @@ const Settings = () => {
     [user],
   )
 
+  const [profileImage, setProfileImage] = useState(null)
+
+  const [profilePreview, setProfilePreview] = useState(null)
+
   const [profile, setProfile] = useState({ ...originalProfile })
 
   const isProfileDirty =
@@ -49,7 +53,8 @@ const Settings = () => {
     profile.lastName !== originalProfile.lastName ||
     profile.email !== originalProfile.email ||
     profile.username !== originalProfile.username ||
-    profile.phoneNumber !== originalProfile.phoneNumber
+    profile.phoneNumber !== originalProfile.phoneNumber ||
+    profileImage != null
 
   const [password, setPassword] = useState({
     currentPassword: '',
@@ -96,6 +101,8 @@ const Settings = () => {
         email: user.email,
         username: user.username,
         phoneNumber: user.phoneNumber,
+        profilePictureUrl: user?.profilePictureUrl,
+        profileImage: null,
       })
     }
   }, [user])
@@ -146,7 +153,24 @@ const Settings = () => {
     setLoading((prev) => ({ ...prev, [section]: true }))
     try {
       if (section.toLowerCase() == 'profile') {
-        await API.patch(`/users/profile/${user?.id}`, profile)
+        let formData = new FormData()
+
+        formData.append('firstName', profile.firstName)
+        formData.append('lastName', profile.lastName)
+        formData.append('username', profile.username)
+        formData.append('phoneNumber', profile?.phoneNumber || "")
+        formData.append('profilePicUrl', profile.profilePictureUrl)
+        formData.append('email', profile.email)
+
+        if (profileImage) {
+          formData.append('profileImage', profileImage)
+        } else {
+          formData.append('profileImage', 'null')
+        }
+
+        await API.patch(`/users/profile/${user?.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
         fetchCurrentUser()
         toast.success('Profile Updated Succesfull')
       }
@@ -177,6 +201,22 @@ const Settings = () => {
     }
   }
 
+  const handleProfilePicUpload = (e) => {
+    const MAX_IMAGE_SIZE = 1 * 1024 * 1024
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error('Upload file less than 1MB')
+      return
+    }
+    setProfileImage(file)
+    const reader = new FileReader()
+    reader.onload = () => {
+      setProfilePreview(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
   return (
     <div className="min-h-screen flex-1 space-y-4">
       <div className="space-y-2">
@@ -202,17 +242,30 @@ const Settings = () => {
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-24 w-24">
                     <AvatarImage
-                      src={`https://avatar.iran.liara.run/username?username=${user?.firstName}+${user?.lastName}`}
+                      className="object-cover"
+                      src={
+                        profilePreview
+                          ? profilePreview
+                          : user?.profilePictureUrl
+                            ? user?.profilePictureUrl
+                            : `https://avatar.iran.liara.run/username?username=${user?.firstName}+${user?.lastName}`
+                      }
                     />
                     <AvatarFallback className="text-3xl">
                       {user?.firstName.split('')[0]}
                     </AvatarFallback>
                   </Avatar>
+                  <input
+                    type="file"
+                    id="profilePicUpload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleProfilePicUpload(e)}
+                  />
                   <Button
                     variant="outline"
                     size="sm"
-                    className="disabled:cursor-not-allowed"
-                    disabled
+                    onClick={() => document.getElementById('profilePicUpload')?.click()}
                   >
                     Change Picture
                   </Button>
@@ -382,6 +435,7 @@ const Settings = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="default">Default</SelectItem>
                             <SelectItem value="email">Email</SelectItem>
                             <SelectItem value="slack-dm">Slack DM (if available)</SelectItem>
                             <SelectItem value="teams-dm">Teams DM (if available)</SelectItem>
